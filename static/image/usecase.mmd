@@ -1,0 +1,49 @@
+graph LR
+    classDef actor fill:#fff,stroke:#1f3a8a,stroke-width:2px,color:#1f3a8a,font-weight:bold
+    classDef usecase fill:#eaf2ff,stroke:#2563eb,stroke-width:1.5px,color:#0b2447,rx:40,ry:40
+    classDef system fill:#f8fafc,stroke:#64748b,stroke-width:2px,stroke-dasharray:6 4,color:#0f172a
+    classDef ext fill:#fff7ed,stroke:#c2410c,stroke-width:2px,color:#7c2d12
+
+    User((👤<br/>普通用户))
+    Admin((🛠<br/>管理员))
+
+    subgraph SYS["MiroFish 群体智能预测引擎"]
+        UC1(["UC1<br/>上传种子材料<br/>构建知识图谱"])
+        UC2(["UC2<br/>配置仿真环境<br/>生成数字人设"])
+        UC3(["UC3<br/>启动并监控<br/>群体仿真"])
+        UC4(["UC4<br/>生成预测<br/>分析报告"])
+        UC5(["UC5<br/>与虚拟智能体<br/>深度对话"])
+        UC6(["UC6<br/>查看历史<br/>项目档案"])
+        UC7(["UC7<br/>注入上帝视角<br/>外部变量"])
+        UC8(["UC8<br/>查看可视化<br/>知识图谱"])
+    end
+
+    LLM[/"LLM API<br/>(Qwen / GPT)"/]
+    ZEP[/"Zep Cloud<br/>记忆服务"/]
+
+    User --> UC1
+    User --> UC2
+    User --> UC3
+    User --> UC4
+    User --> UC5
+    User --> UC6
+    User --> UC7
+    User --> UC8
+
+    Admin --> UC6
+
+    UC1 -.->|include| UC8
+    UC3 -.->|extend| UC7
+    UC4 -.->|include| UC5
+
+    UC1 --> LLM
+    UC2 --> LLM
+    UC3 --> LLM
+    UC4 --> LLM
+    UC1 --> ZEP
+    UC3 --> ZEP
+
+    class User,Admin actor
+    class UC1,UC2,UC3,UC4,UC5,UC6,UC7,UC8 usecase
+    class SYS system
+    class LLM,ZEP ext

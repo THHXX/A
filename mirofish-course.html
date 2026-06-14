@@ -1,0 +1,2546 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MiroFish 深度解析课程 - 多智能体预测引擎</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,700;12..96,800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400;1,9..40,500&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --color-bg:             #FAF7F2;
+            --color-bg-warm:        #F5F0E8;
+            --color-bg-code:        #1E1E2E;
+            --color-text:           #2C2A28;
+            --color-text-secondary: #6B6560;
+            --color-text-muted:     #9E9790;
+            --color-border:         #E5DFD6;
+            --color-border-light:   #EEEBE5;
+            --color-surface:        #FFFFFF;
+            --color-surface-warm:   #FDF9F3;
+
+            --color-accent:         #D94F30;
+            --color-accent-hover:   #C4432A;
+            --color-accent-light:   #FDEEE9;
+            --color-accent-muted:   #E8836C;
+
+            --color-success:        #2D8B55;
+            --color-success-light:  #E8F5EE;
+            --color-error:          #C93B3B;
+            --color-error-light:    #FDE8E8;
+            --color-info:           #2A7B9B;
+            --color-info-light:     #E4F2F7;
+
+            --color-actor-1:        #D94F30;
+            --color-actor-2:        #2A7B9B;
+            --color-actor-3:        #7B6DAA;
+            --color-actor-4:        #D4A843;
+            --color-actor-5:        #2D8B55;
+
+            --font-display:  'Bricolage Grotesque', Georgia, serif;
+            --font-body:     'DM Sans', -apple-system, sans-serif;
+            --font-mono:     'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+
+            --text-xs:   0.75rem;
+            --text-sm:   0.875rem;
+            --text-base: 1rem;
+            --text-lg:   1.125rem;
+            --text-xl:   1.25rem;
+            --text-2xl:  1.5rem;
+            --text-3xl:  1.875rem;
+            --text-4xl:  2.25rem;
+            --text-5xl:  3rem;
+            --text-6xl:  3.75rem;
+
+            --leading-tight:  1.15;
+            --leading-snug:   1.3;
+            --leading-normal: 1.6;
+            --leading-loose:  1.8;
+
+            --space-1:  0.25rem;
+            --space-2:  0.5rem;
+            --space-3:  0.75rem;
+            --space-4:  1rem;
+            --space-5:  1.25rem;
+            --space-6:  1.5rem;
+            --space-8:  2rem;
+            --space-10: 2.5rem;
+            --space-12: 3rem;
+            --space-16: 4rem;
+            --space-20: 5rem;
+            --space-24: 6rem;
+
+            --content-width:     800px;
+            --content-width-wide: 1000px;
+            --nav-height:        50px;
+            --radius-sm:  8px;
+            --radius-md:  12px;
+            --radius-lg:  16px;
+            --radius-full: 9999px;
+
+            --shadow-sm:  0 1px 2px rgba(44, 42, 40, 0.05);
+            --shadow-md:  0 4px 12px rgba(44, 42, 40, 0.08);
+            --shadow-lg:  0 8px 24px rgba(44, 42, 40, 0.1);
+            --shadow-xl:  0 16px 48px rgba(44, 42, 40, 0.12);
+
+            --ease-out:    cubic-bezier(0.16, 1, 0.3, 1);
+            --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+            --duration-fast:   150ms;
+            --duration-normal: 300ms;
+            --duration-slow:   500ms;
+            --stagger-delay:   120ms;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-snap-type: y proximity;
+            scroll-behavior: smooth;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: var(--font-body);
+            font-size: var(--text-base);
+            line-height: var(--leading-normal);
+            color: var(--color-text);
+            background: var(--color-bg);
+            background-image: radial-gradient(
+                ellipse at 20% 50%,
+                rgba(217, 79, 48, 0.03) 0%,
+                transparent 50%
+            );
+        }
+
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb {
+            background: var(--color-border);
+            border-radius: var(--radius-full);
+        }
+
+        .nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: var(--nav-height);
+            background: rgba(250, 247, 242, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--color-border);
+            z-index: 1000;
+        }
+
+        .progress-bar {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 3px;
+            background: var(--color-accent);
+            width: 0%;
+            transition: width var(--duration-fast) linear;
+        }
+
+        .nav-inner {
+            max-width: var(--content-width-wide);
+            margin: 0 auto;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 var(--space-6);
+        }
+
+        .nav-title {
+            font-family: var(--font-display);
+            font-weight: 700;
+            font-size: var(--text-lg);
+        }
+
+        .nav-dots {
+            display: flex;
+            gap: var(--space-2);
+        }
+
+        .nav-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            border: 2px solid var(--color-text-muted);
+            background: transparent;
+            cursor: pointer;
+            padding: 0;
+            transition: all var(--duration-fast);
+        }
+
+        .nav-dot:hover {
+            border-color: var(--color-accent-muted);
+        }
+
+        .nav-dot.current {
+            border-color: var(--color-accent);
+            background: var(--color-accent);
+            box-shadow: 0 0 10px rgba(217, 79, 48, 0.3);
+        }
+
+        .nav-dot.visited {
+            background: var(--color-accent);
+            border-color: var(--color-accent);
+        }
+
+        .module {
+            min-height: 100dvh;
+            min-height: 100vh;
+            scroll-snap-align: start;
+            padding: var(--space-16) var(--space-6);
+            padding-top: calc(var(--nav-height) + var(--space-12));
+        }
+
+        .module-content {
+            max-width: var(--content-width);
+            margin: 0 auto;
+        }
+
+        .module-header {
+            margin-bottom: var(--space-12);
+        }
+
+        .module-number {
+            font-family: var(--font-display);
+            font-size: var(--text-6xl);
+            font-weight: 800;
+            color: var(--color-accent);
+            opacity: 0.15;
+            line-height: 1;
+            margin-bottom: var(--space-2);
+        }
+
+        .module-title {
+            font-family: var(--font-display);
+            font-size: var(--text-4xl);
+            font-weight: 700;
+            line-height: var(--leading-tight);
+            margin: 0 0 var(--space-3) 0;
+        }
+
+        .module-subtitle {
+            font-size: var(--text-lg);
+            color: var(--color-text-secondary);
+            margin: 0;
+        }
+
+        .screen {
+            margin-bottom: var(--space-16);
+        }
+
+        .screen-heading {
+            font-family: var(--font-display);
+            font-size: var(--text-2xl);
+            font-weight: 600;
+            margin: 0 0 var(--space-6) 0;
+        }
+
+        .animate-in {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity var(--duration-slow) var(--ease-out),
+                        transform var(--duration-slow) var(--ease-out);
+        }
+
+        .animate-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .stagger-children > .animate-in {
+            transition-delay: calc(var(--stagger-index, 0) * var(--stagger-delay));
+        }
+
+        p {
+            margin: 0 0 var(--space-4) 0;
+        }
+
+        p:last-child {
+            margin-bottom: 0;
+        }
+
+        strong {
+            font-weight: 600;
+        }
+
+        .translation-block {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0;
+            border-radius: var(--radius-md);
+            overflow: hidden;
+            box-shadow: var(--shadow-md);
+            margin: var(--space-8) 0;
+        }
+
+        .translation-code {
+            background: var(--color-bg-code);
+            color: #CDD6F4;
+            padding: var(--space-6);
+            font-family: var(--font-mono);
+            font-size: var(--text-sm);
+            line-height: 1.7;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        .translation-code pre,
+        .translation-code code {
+            white-space: pre-wrap;
+            word-break: break-word;
+            overflow-x: hidden;
+            margin: 0;
+        }
+
+        .translation-english {
+            background: var(--color-surface-warm);
+            padding: var(--space-6);
+            font-size: var(--text-sm);
+            line-height: 1.7;
+            border-left: 3px solid var(--color-accent);
+        }
+
+        .translation-label {
+            position: absolute;
+            top: var(--space-2);
+            right: var(--space-3);
+            font-size: var(--text-xs);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            opacity: 0.5;
+        }
+
+        .translation-english .translation-label {
+            color: var(--color-text-muted);
+        }
+
+        .translation-lines .tl {
+            margin: 0 0 var(--space-3) 0;
+            padding: 0 0 var(--space-3) 0;
+            border-bottom: 1px solid var(--color-border-light);
+        }
+
+        .translation-lines .tl:last-child {
+            margin-bottom: 0;
+            padding-bottom: 0;
+            border-bottom: none;
+        }
+
+        .code-keyword  { color: #CBA6F7; }
+        .code-string   { color: #A6E3A1; }
+        .code-function { color: #89B4FA; }
+        .code-comment  { color: #6C7086; }
+        .code-number   { color: #FAB387; }
+        .code-property { color: #F9E2AF; }
+        .code-operator { color: #94E2D5; }
+        .code-tag      { color: #F38BA8; }
+        .code-attr     { color: #F9E2AF; }
+        .code-value    { color: #A6E3A1; }
+
+        .callout {
+            display: flex;
+            gap: var(--space-4);
+            padding: var(--space-5);
+            border-radius: var(--radius-md);
+            margin: var(--space-8) 0;
+        }
+
+        .callout-accent {
+            background: var(--color-accent-light);
+            border-left: 4px solid var(--color-accent);
+        }
+
+        .callout-info {
+            background: var(--color-info-light);
+            border-left: 4px solid var(--color-info);
+        }
+
+        .callout-warning {
+            background: var(--color-error-light);
+            border-left: 4px solid var(--color-error);
+        }
+
+        .callout-icon {
+            font-size: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        .callout-title {
+            display: block;
+            font-weight: 600;
+            margin-bottom: var(--space-1);
+        }
+
+        .callout-content p {
+            margin: 0;
+        }
+
+        .pattern-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: var(--space-4);
+            margin: var(--space-8) 0;
+        }
+
+        .pattern-card {
+            background: var(--color-surface);
+            border-radius: var(--radius-md);
+            padding: var(--space-6);
+            box-shadow: var(--shadow-sm);
+            transition: transform var(--duration-normal) var(--ease-out),
+                        box-shadow var(--duration-normal);
+            border-top: 3px solid var(--color-accent);
+        }
+
+        .pattern-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .pattern-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            margin-bottom: var(--space-4);
+            background: var(--color-accent);
+            color: white;
+        }
+
+        .pattern-title {
+            font-family: var(--font-display);
+            font-size: var(--text-lg);
+            font-weight: 600;
+            margin: 0 0 var(--space-2) 0;
+        }
+
+        .pattern-desc {
+            font-size: var(--text-sm);
+            color: var(--color-text-secondary);
+            margin: 0;
+        }
+
+        .step-cards {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-3);
+            margin: var(--space-8) 0;
+        }
+
+        .step-card {
+            display: flex;
+            align-items: flex-start;
+            gap: var(--space-4);
+            padding: var(--space-4) var(--space-5);
+            background: var(--color-surface);
+            border-radius: var(--radius-md);
+            border-left: 3px solid var(--color-accent);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .step-num {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: var(--color-accent);
+            color: white;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: var(--font-display);
+            flex-shrink: 0;
+        }
+
+        .step-body p {
+            margin: var(--space-1) 0 0;
+            color: var(--color-text-secondary);
+            font-size: var(--text-sm);
+        }
+
+        .icon-rows {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-4);
+            margin: var(--space-8) 0;
+        }
+
+        .icon-row {
+            display: flex;
+            align-items: center;
+            gap: var(--space-4);
+            padding: var(--space-4);
+            background: var(--color-surface);
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .icon-circle {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            flex-shrink: 0;
+            background: var(--color-actor-1);
+            color: white;
+        }
+
+        .icon-row p {
+            margin: 0;
+            color: var(--color-text-secondary);
+            font-size: var(--text-sm);
+        }
+
+        .quiz-container {
+            margin: var(--space-8) 0;
+        }
+
+        .quiz-question-block {
+            background: var(--color-surface);
+            border-radius: var(--radius-md);
+            padding: var(--space-6);
+            margin-bottom: var(--space-6);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .quiz-question {
+            font-family: var(--font-display);
+            font-size: var(--text-lg);
+            font-weight: 600;
+            margin: 0 0 var(--space-4) 0;
+        }
+
+        .quiz-options {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-3);
+        }
+
+        .quiz-option {
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+            padding: var(--space-3) var(--space-4);
+            border: 2px solid var(--color-border);
+            border-radius: var(--radius-sm);
+            background: var(--color-surface);
+            cursor: pointer;
+            width: 100%;
+            transition: border-color var(--duration-fast),
+                        background var(--duration-fast);
+            text-align: left;
+            font-family: var(--font-body);
+            font-size: var(--text-base);
+        }
+
+        .quiz-option:hover:not(:disabled) {
+            border-color: var(--color-accent-muted);
+        }
+
+        .quiz-option.selected {
+            border-color: var(--color-accent);
+            background: var(--color-accent-light);
+        }
+
+        .quiz-option.correct {
+            border-color: var(--color-success);
+            background: var(--color-success-light);
+        }
+
+        .quiz-option.incorrect {
+            border-color: var(--color-error);
+            background: var(--color-error-light);
+        }
+
+        .quiz-option:disabled {
+            cursor: not-allowed;
+            opacity: 0.8;
+        }
+
+        .quiz-option-radio {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            border: 2px solid var(--color-border);
+            transition: all var(--duration-fast);
+            flex-shrink: 0;
+        }
+
+        .quiz-option.selected .quiz-option-radio {
+            border-color: var(--color-accent);
+            background: var(--color-accent);
+            box-shadow: inset 0 0 0 3px white;
+        }
+
+        .quiz-feedback {
+            max-height: 0;
+            overflow: hidden;
+            opacity: 0;
+            transition: max-height var(--duration-normal),
+                        opacity var(--duration-normal);
+        }
+
+        .quiz-feedback.show {
+            max-height: 200px;
+            opacity: 1;
+            padding: var(--space-3);
+            margin-top: var(--space-2);
+            border-radius: var(--radius-sm);
+        }
+
+        .quiz-feedback.success {
+            background: var(--color-success-light);
+            color: var(--color-success);
+        }
+
+        .quiz-feedback.error {
+            background: var(--color-error-light);
+            color: var(--color-error);
+        }
+
+        .quiz-check-btn,
+        .quiz-reset-btn {
+            padding: var(--space-3) var(--space-6);
+            border-radius: var(--radius-sm);
+            font-family: var(--font-display);
+            font-weight: 600;
+            font-size: var(--text-base);
+            cursor: pointer;
+            transition: all var(--duration-fast);
+            border: none;
+        }
+
+        .quiz-check-btn {
+            background: var(--color-accent);
+            color: white;
+            margin-right: var(--space-3);
+        }
+
+        .quiz-check-btn:hover {
+            background: var(--color-accent-hover);
+        }
+
+        .quiz-reset-btn {
+            background: var(--color-surface);
+            color: var(--color-text);
+            border: 2px solid var(--color-border);
+        }
+
+        .quiz-reset-btn:hover {
+            border-color: var(--color-text-muted);
+        }
+
+        .term {
+            border-bottom: 1.5px dashed var(--color-accent-muted);
+            cursor: pointer;
+            position: relative;
+        }
+
+        .term:hover, .term.active {
+            border-bottom-color: var(--color-accent);
+            color: var(--color-accent);
+        }
+
+        .term-tooltip {
+            position: fixed;
+            background: var(--color-bg-code);
+            color: #CDD6F4;
+            padding: var(--space-3) var(--space-4);
+            border-radius: var(--radius-sm);
+            font-size: var(--text-sm);
+            font-family: var(--font-body);
+            line-height: var(--leading-normal);
+            width: max(200px, min(320px, 80vw));
+            box-shadow: var(--shadow-lg);
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity var(--duration-fast);
+            z-index: 10000;
+        }
+
+        .term-tooltip::after {
+            content: '';
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            border: 6px solid transparent;
+            border-top-color: var(--color-bg-code);
+        }
+
+        .term-tooltip.visible {
+            opacity: 1;
+        }
+
+        .term-tooltip.flip {
+            bottom: auto;
+            top: calc(100% + 8px);
+        }
+
+        .term-tooltip.flip::after {
+            top: auto;
+            bottom: 100%;
+            border-top-color: transparent;
+            border-bottom-color: var(--color-bg-code);
+        }
+
+        .chat-window {
+            background: var(--color-surface);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-md);
+            overflow: hidden;
+            margin: var(--space-8) 0;
+        }
+
+        .chat-messages {
+            padding: var(--space-6);
+            min-height: 300px;
+            max-height: 450px;
+            overflow-y: auto;
+        }
+
+        .chat-message {
+            display: flex;
+            gap: var(--space-3);
+            margin-bottom: var(--space-4);
+            align-items: flex-start;
+        }
+
+        .chat-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-family: var(--font-display);
+            color: white;
+            flex-shrink: 0;
+        }
+
+        .chat-bubble {
+            background: var(--color-surface-warm);
+            border-radius: var(--radius-md);
+            padding: var(--space-4);
+            max-width: 80%;
+        }
+
+        .chat-sender {
+            font-weight: 600;
+            font-size: var(--text-sm);
+            display: block;
+            margin-bottom: var(--space-1);
+        }
+
+        .chat-bubble p {
+            margin: 0;
+            font-size: var(--text-sm);
+        }
+
+        .chat-typing {
+            display: flex;
+            gap: var(--space-3);
+            padding: 0 var(--space-6) var(--space-6);
+            align-items: flex-start;
+        }
+
+        .chat-typing-dots {
+            background: var(--color-surface-warm);
+            border-radius: var(--radius-md);
+            padding: var(--space-4);
+            display: flex;
+            gap: var(--space-2);
+        }
+
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--color-text-muted);
+            animation: typingBounce 1.4s infinite;
+        }
+
+        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes typingBounce {
+            0%, 60%, 100% { transform: translateY(0); }
+            30% { transform: translateY(-6px); }
+        }
+
+        @keyframes fadeSlideUp {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .chat-controls {
+            padding: var(--space-4) var(--space-6);
+            border-top: 1px solid var(--color-border);
+            display: flex;
+            gap: var(--space-3);
+            align-items: center;
+        }
+
+        .chat-controls button {
+            padding: var(--space-2) var(--space-4);
+            border-radius: var(--radius-sm);
+            font-family: var(--font-body);
+            font-size: var(--text-sm);
+            cursor: pointer;
+            border: 2px solid var(--color-border);
+            background: var(--color-surface);
+            transition: all var(--duration-fast);
+        }
+
+        .chat-controls button:hover {
+            border-color: var(--color-accent);
+        }
+
+        .chat-progress {
+            margin-left: auto;
+            color: var(--color-text-muted);
+            font-size: var(--text-sm);
+        }
+
+        .flow-animation {
+            background: var(--color-surface);
+            border-radius: var(--radius-lg);
+            padding: var(--space-8);
+            margin: var(--space-8) 0;
+            box-shadow: var(--shadow-md);
+            text-align: center;
+        }
+
+        .flow-actors {
+            display: flex;
+            justify-content: center;
+            gap: var(--space-8);
+            margin-bottom: var(--space-8);
+            flex-wrap: wrap;
+        }
+
+        .flow-actor {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: var(--space-3);
+            padding: var(--space-4);
+            border-radius: var(--radius-md);
+            transition: all var(--duration-normal) var(--ease-out);
+        }
+
+        .flow-actor.active {
+            box-shadow: 0 0 0 3px var(--color-accent), 0 0 20px rgba(217, 79, 48, 0.2);
+            transform: scale(1.05);
+        }
+
+        .flow-actor-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-family: var(--font-display);
+            font-size: var(--text-xl);
+            color: white;
+            background: var(--color-actor-1);
+        }
+
+        .flow-actor span {
+            font-weight: 600;
+            font-family: var(--font-display);
+        }
+
+        .flow-step-label {
+            font-size: var(--text-lg);
+            color: var(--color-text-secondary);
+            min-height: 3em;
+            margin-bottom: var(--space-6);
+        }
+
+        .flow-controls {
+            display: flex;
+            gap: var(--space-3);
+            justify-content: center;
+            align-items: center;
+        }
+
+        .flow-controls button {
+            padding: var(--space-3) var(--space-6);
+            border-radius: var(--radius-sm);
+            font-family: var(--font-display);
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            background: var(--color-accent);
+            color: white;
+            transition: all var(--duration-fast);
+        }
+
+        .flow-controls button:hover {
+            background: var(--color-accent-hover);
+        }
+
+        .flow-progress {
+            color: var(--color-text-muted);
+            font-size: var(--text-sm);
+        }
+
+        .file-tree {
+            font-family: var(--font-mono);
+            font-size: var(--text-sm);
+            background: var(--color-surface);
+            border-radius: var(--radius-md);
+            padding: var(--space-6);
+            margin: var(--space-8) 0;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .ft-folder, .ft-file {
+            padding: var(--space-2) var(--space-3);
+            border-left: 2px solid var(--color-border-light);
+            margin-left: var(--space-4);
+        }
+
+        .ft-folder > .ft-name {
+            color: var(--color-accent);
+            font-weight: 600;
+        }
+
+        .ft-folder > .ft-name::before {
+            content: '📁 ';
+        }
+
+        .ft-file > .ft-name::before {
+            content: '📄 ';
+        }
+
+        .ft-desc {
+            color: var(--color-text-secondary);
+            font-family: var(--font-body);
+            margin-left: var(--space-2);
+            font-size: var(--text-xs);
+        }
+
+        .ft-children {
+            margin-left: var(--space-4);
+        }
+
+        .hero-image {
+            width: 100%;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-lg);
+            margin: var(--space-8) 0;
+        }
+
+        @media (max-width: 768px) {
+            :root {
+                --text-4xl: 1.875rem;
+                --text-5xl: 2.25rem;
+                --text-6xl: 3rem;
+            }
+            .translation-block { grid-template-columns: 1fr; }
+            .translation-english { border-left: none; border-top: 3px solid var(--color-accent); }
+            .pattern-cards { grid-template-columns: 1fr 1fr; }
+        }
+
+        @media (max-width: 480px) {
+            :root {
+                --text-4xl: 1.5rem;
+                --text-5xl: 1.875rem;
+                --text-6xl: 2.25rem;
+            }
+            .module { padding: var(--space-8) var(--space-4); }
+            .pattern-cards { grid-template-columns: 1fr; }
+            .flow-actors { gap: var(--space-4); }
+            .nav-dots { display: none; }
+        }
+    </style>
+</head>
+<body>
+    <nav class="nav">
+        <div class="progress-bar" role="progressbar" aria-valuenow="0"></div>
+        <div class="nav-inner">
+            <span class="nav-title">🐟 MiroFish 深度解析</span>
+            <div class="nav-dots">
+                <button class="nav-dot current" data-target="module-1" aria-label="模块 1"></button>
+                <button class="nav-dot" data-target="module-2" aria-label="模块 2"></button>
+                <button class="nav-dot" data-target="module-3" aria-label="模块 3"></button>
+                <button class="nav-dot" data-target="module-4" aria-label="模块 4"></button>
+                <button class="nav-dot" data-target="module-5" aria-label="模块 5"></button>
+                <button class="nav-dot" data-target="module-6" aria-label="模块 6"></button>
+            </div>
+        </div>
+    </nav>
+
+    <section class="module" id="module-1" style="background: var(--color-bg)">
+        <div class="module-content">
+            <header class="module-header animate-in">
+                <span class="module-number">01</span>
+                <h1 class="module-title">认识 MiroFish</h1>
+                <p class="module-subtitle">一个基于多智能体技术的新一代 AI 预测引擎</p>
+            </header>
+
+            <div class="module-body stagger-children">
+                <section class="screen animate-in">
+                    <h2 class="screen-heading">MiroFish 是什么？</h2>
+                    <p>想象一下，你有一个「数字沙盘」。在这个沙盘中，你可以：</p>
+
+                    <div class="step-cards">
+                        <div class="step-card">
+                            <div class="step-num">1</div>
+                            <div class="step-body">
+                                <strong>上传背景材料</strong>
+                                <p>无论是新闻报道、政策草案、还是小说故事</p>
+                            </div>
+                        </div>
+                        <div class="step-card">
+                            <div class="step-num">2</div>
+                            <div class="step-body">
+                                <strong>描述你的预测需求</strong>
+                                <p>用自然语言告诉系统你想推演什么</p>
+                            </div>
+                        </div>
+                        <div class="step-card">
+                            <div class="step-num">3</div>
+                            <div class="step-body">
+                                <strong>获得预测报告</strong>
+                                <p>系统生成数千个智能体进行交互模拟</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="screen animate-in">
+                    <h2 class="screen-heading">核心工作流程</h2>
+                    <p>MiroFish 的工作分为 5 个关键步骤，让我们通过一个例子来理解：</p>
+
+                    <div class="pattern-cards">
+                        <div class="pattern-card" style="border-top-color: var(--color-actor-1)">
+                            <div class="pattern-icon" style="background: var(--color-actor-1)">📊</div>
+                            <h4 class="pattern-title">图谱构建</h4>
+                            <p class="pattern-desc">从材料中提取实体和关系，构建知识图谱</p>
+                        </div>
+                        <div class="pattern-card" style="border-top-color: var(--color-actor-2)">
+                            <div class="pattern-icon" style="background: var(--color-actor-2)">🎭</div>
+                            <h4 class="pattern-title">环境搭建</h4>
+                            <p class="pattern-desc">为每个实体生成人设，配置模拟参数</p>
+                        </div>
+                        <div class="pattern-card" style="border-top-color: var(--color-actor-3)">
+                            <div class="pattern-icon" style="background: var(--color-actor-3)">🎮</div>
+                            <h4 class="pattern-title">开始模拟</h4>
+                            <p class="pattern-desc">双平台（Twitter+Reddit）并行模拟智能体交互</p>
+                        </div>
+                        <div class="pattern-card" style="border-top-color: var(--color-actor-4)">
+                            <div class="pattern-icon" style="background: var(--color-actor-4)">📝</div>
+                            <h4 class="pattern-title">报告生成</h4>
+                            <p class="pattern-desc">ReportAgent 分析模拟结果生成预测</p>
+                        </div>
+                        <div class="pattern-card" style="border-top-color: var(--color-actor-5)">
+                            <div class="pattern-icon" style="background: var(--color-actor-5)">💬</div>
+                            <h4 class="pattern-title">深度互动</h4>
+                            <p class="pattern-desc">与模拟世界中的任意智能体对话</p>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="screen animate-in">
+                    <h2 class="screen-heading">组件对话：当用户上传材料时</h2>
+                    <p>让我们看看系统内部各组件是如何「对话」的：</p>
+
+                    <div class="chat-window">
+                        <div class="chat-messages" id="chat-messages-1">
+                            <div class="chat-message" data-msg="0" data-sender="user" style="display:none">
+                                <div class="chat-avatar" style="background: var(--color-text-secondary)">👤</div>
+                                <div class="chat-bubble">
+                                    <span class="chat-sender" style="color: var(--color-text-secondary)">用户</span>
+                                    <p>我这里有一份《红楼梦》前80回的材料，帮我预测一下后面的剧情走向？</p>
+                                </div>
+                            </div>
+                            <div class="chat-message" data-msg="1" data-sender="frontend" style="display:none">
+                                <div class="chat-avatar" style="background: var(--color-actor-1)">FE</div>
+                                <div class="chat-bubble">
+                                    <span class="chat-sender" style="color: var(--color-actor-1)">前端</span>
+                                    <p>好的，我来把文件传给后端 API。文件有点大，可能需要几秒钟...</p>
+                                </div>
+                            </div>
+                            <div class="chat-message" data-msg="2" data-sender="ontology" style="display:none">
+                                <div class="chat-avatar" style="background: var(--color-actor-2)">OG</div>
+                                <div class="chat-bubble">
+                                    <span class="chat-sender" style="color: var(--color-actor-2)">本体生成器</span>
+                                    <p>收到文本！让我分析一下...嗯，我识别出了10种实体类型：贾宝玉、林黛玉、薛宝钗...还有 Person 和 Organization 兜底类型。</p>
+                                </div>
+                            </div>
+                            <div class="chat-message" data-msg="3" data-sender="graph" style="display:none">
+                                <div class="chat-avatar" style="background: var(--color-actor-3)">GB</div>
+                                <div class="chat-bubble">
+                                    <span class="chat-sender" style="color: var(--color-actor-3)">图谱构建器</span>
+                                    <p>好的，本体定义完成！现在我把文本传给 Zep Cloud 来构建知识图谱。这需要一些时间处理...</p>
+                                </div>
+                            </div>
+                            <div class="chat-message" data-msg="4" data-sender="zep" style="display:none">
+                                <div class="chat-avatar" style="background: var(--color-actor-4)">ZP</div>
+                                <div class="chat-bubble">
+                                    <span class="chat-sender" style="color: var(--color-actor-4)">Zep Cloud</span>
+                                    <p>图谱构建完成！我找到了 156 个实体和 423 条关系。贾宝玉和林黛玉之间是「表兄妹」关系！</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="chat-typing" id="chat-typing-1" style="display:none">
+                            <div class="chat-avatar" id="typing-avatar-1">?</div>
+                            <div class="chat-typing-dots">
+                                <span class="typing-dot"></span>
+                                <span class="typing-dot"></span>
+                                <span class="typing-dot"></span>
+                            </div>
+                        </div>
+
+                        <div class="chat-controls">
+                            <button onclick="playChatNext(1)">下一条消息</button>
+                            <button onclick="playChatAll(1)">自动播放</button>
+                            <button onclick="resetChat(1)">重新播放</button>
+                            <span class="chat-progress" id="chat-progress-1">0 / 5 条消息</span>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="screen animate-in">
+                    <h2 class="screen-heading">知识检测</h2>
+                    <div class="quiz-container" id="quiz-1">
+                        <div class="quiz-question-block" data-question="q1" data-correct="option-c">
+                            <h3 class="quiz-question">MiroFish 的第一步是做什么？</h3>
+                            <div class="quiz-options">
+                                <button class="quiz-option" data-value="option-a" onclick="selectOption(this)">
+                                    <div class="quiz-option-radio"></div>
+                                    <span>直接开始模拟，让智能体自由交互</span>
+                                </button>
+                                <button class="quiz-option" data-value="option-b" onclick="selectOption(this)">
+                                    <div class="quiz-option-radio"></div>
+                                    <span>生成预测报告</span>
+                                </button>
+                                <button class="quiz-option" data-value="option-c" onclick="selectOption(this)">
+                                    <div class="quiz-option-radio"></div>
+                                    <span>从材料中提取实体和关系，构建知识图谱</span>
+                                </button>
+                            </div>
+                            <div class="quiz-feedback" id="q1-feedback"></div>
+                        </div>
+
+                        <div class="quiz-question-block" data-question="q2" data-correct="option-b">
+                            <h3 class="quiz-question">MiroFish 模拟在哪两个平台上进行？</h3>
+                            <div class="quiz-options">
+                                <button class="quiz-option" data-value="option-a" onclick="selectOption(this)">
+                                    <div class="quiz-option-radio"></div>
+                                    <span>微信和微博</span>
+                                </button>
+                                <button class="quiz-option" data-value="option-b" onclick="selectOption(this)">
+                                    <div class="quiz-option-radio"></div>
+                                    <span>Twitter 和 Reddit</span>
+                                </button>
+                                <button class="quiz-option" data-value="option-c" onclick="selectOption(this)">
+                                    <div class="quiz-option-radio"></div>
+                                    <span>Facebook 和 Instagram</span>
+                                </button>
+                            </div>
+                            <div class="quiz-feedback" id="q2-feedback"></div>
+                        </div>
+
+                        <button class="quiz-check-btn" onclick="checkQuiz('quiz-1')">检查答案</button>
+                        <button class="quiz-reset-btn" onclick="resetQuiz('quiz-1')">重新答题</button>
+                        <div class="quiz-overall-feedback" id="quiz-1-overall"></div>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </section>
+
+    <section class="module" id="module-2" style="background: var(--color-bg-warm)">
+        <div class="module-content">
+            <header class="module-header animate-in">
+                <span class="module-number">02</span>
+                <h1 class="module-title">认识核心「演员」</h1>
+                <p class="module-subtitle">探索项目的主要组件和它们的职责</p>
+            </header>
+
+            <div class="module-body stagger-children">
+                <section class="screen animate-in">
+                    <h2 class="screen-heading">项目目录结构</h2>
+                    <p>首先，让我们看看这个项目的「演员表」都在哪里：</p>
+
+                    <div class="file-tree">
+                        <div class="ft-folder open">
+                            <span class="ft-name">backend/</span>
+                            <span class="ft-desc">Python Flask 后端服务</span>
+                            <div class="ft-children">
+                                <div class="ft-folder">
+                                    <span class="ft-name">app/</span>
+                                    <span class="ft-desc">应用主目录</span>
+                                    <div class="ft-children">
+                                        <div class="ft-folder">
+                                            <span class="ft-name">api/</span>
+                                            <span class="ft-desc">API 路由（接口层）</span>
+                                        </div>
+                                        <div class="ft-folder">
+                                            <span class="ft-name">services/</span>
+                                            <span class="ft-desc">业务逻辑（服务层）</span>
+                                        </div>
+                                        <div class="ft-folder">
+                                            <span class="ft-name">models/</span>
+                                            <span class="ft-desc">数据模型（项目、任务管理）</span>
+                                        </div>
+                                        <div class="ft-file">
+                                            <span class="ft-name">config.py</span>
+                                            <span class="ft-desc">配置管理</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="ft-file">
+                                    <span class="ft-name">run.py</span>
+                                    <span class="ft-desc">后端启动入口</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="ft-folder">
+                            <span class="ft-name">frontend/</span>
+                            <span class="ft-desc">Vue 3 前端应用</span>
+                            <div class="ft-children">
+                                <div class="ft-folder">
+                                    <span class="ft-name">src/</span>
+                                    <span class="ft-desc">源代码目录</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="screen animate-in">
+                    <h2 class="screen-heading">五大核心服务</h2>
+                    <p>后端的 <span class="term" data-definition="服务（Service）是实现具体业务逻辑的代码模块。每个服务负责一个特定的功能，就像工厂里的不同车间。">services</span> 目录里住着最重要的「演员」：</p>
+
+                    <div class="icon-rows">
+                        <div class="icon-row">
+                            <div class="icon-circle" style="background: var(--color-actor-1)">🧠</div>
+                            <div>
+                                <strong>OntologyGenerator</strong>
+                                <p>本体生成器 — 分析文本，设计实体类型和关系类型</p>
+                            </div>
+                        </div>
+                        <div class="icon-row">
+                            <div class="icon-circle" style="background: var(--color-actor-2)">🕸️</div>
+                            <div>
+                                <strong>GraphBuilderService</strong>
+                                <p>图谱构建器 — 调用 Zep Cloud 构建知识图谱</p>
+                            </div>
+                        </div>
+                        <div class="icon-row">
+                            <div class="icon-circle" style="background: var(--color-actor-3)">🎭</div>
+                            <div>
+                                <strong>OasisProfileGenerator</strong>
+                                <p>人设生成器 — 为每个实体创建 Agent Profile</p>
+                            </div>
+                        </div>
+                        <div class="icon-row">
+                            <div class="icon-circle" style="background: var(--color-actor-4)">🎮</div>
+                            <div>
+                                <strong>SimulationManager</strong>
+                                <p>模拟管理器 — 管理整个模拟生命周期</p>
+                            </div>
+                        </div>
+                        <div class="icon-row">
+                            <div class="icon-circle" style="background: var(--color-actor-5)">📝</div>
+                            <div>
+                                <strong>ReportAgent</strong>
+                                <p>报告代理 — 分析模拟结果，生成预测报告</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="screen animate-in">
+                    <h2 class="screen-heading">配置管理：Config 类</h2>
+                    <p>让我们看看 <span class="term" data-definition="配置（Config）是应用程序运行时需要的各种设置，比如 API 密钥、文件路径、端口号等。就像电器的说明书和遥控器设置。">config.py</span> 是如何管理所有配置的：</p>
+
+                    <div class="translation-block">
+                        <div class="translation-code">
+                            <span class="translation-label">CODE</span>
+                            <pre><code><span class="code-line"><span class="code-keyword">import</span> os</span>
+<span class="code-line"><span class="code-keyword">from</span> dotenv <span class="code-keyword">import</span> load_dotenv</span>
+<span class="code-line"></span>
+<span class="code-line"><span class="code-comment"># 加载项目根目录的 .env 文件</span></span>
+<span class="code-line">project_root_env = os.path.join(</span>
+<span class="code-line">    os.path.dirname(__file__), </span>
+<span class="code-line">    <span class="code-string">'../../.env'</span></span>
+<span class="code-line">)</span>
+<span class="code-line"></span>
+<span class="code-line"><span class="code-keyword">if</span> os.path.exists(project_root_env):</span>
+<span class="code-line">    load_dotenv(project_root_env, override=<span class="code-keyword">True</span>)</span></code></pre>
+                        </div>
+                        <div class="translation-english">
+                            <span class="translation-label">PLAIN ENGLISH</span>
+                            <div class="translation-lines">
+                                <p class="tl">引入 Python 的 os 模块，用于操作文件系统。</p>
+                                <p class="tl">从 dotenv 库引入 load_dotenv 函数，它能读取 .env 文件。</p>
+                                <p class="tl">（空行，让代码更清晰）</p>
+                                <p class="tl">注释说明：我们要加载项目根目录的 .env 文件。</p>
+                                <p class="tl">计算 .env 文件的路径：从当前文件（config.py）向上两级，就是项目根目录。</p>
+                                <p class="tl">继续构建路径...</p>
+                                <p class="tl">路径构建完成。</p>
+                                <p class="tl">检查这个 .env 文件是否真的存在。</p>
+                                <p class="tl">如果存在，就加载这个文件，覆盖已有的环境变量。</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="callout callout-accent">
+                        <div class="callout-icon">💡</div>
+                        <div class="callout-content">
+                            <strong class="callout-title">关键洞察</strong>
+                            <p>配置文件使用「环境变量」模式 —— API 密钥不直接写在代码里，而是从环境中读取。这是安全的最佳实践！</p>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="screen animate-in">
+                    <h2 class="screen-heading">知识检测</h2>
+                    <div class="quiz-container" id="quiz-2">
+                        <div class="quiz-question-block" data-question="q1" data-correct="option-b">
+                            <h3 class="quiz-question">哪个服务负责为实体生成人设？</h3>
+                            <div class="quiz-options">
+                                <button class="quiz-option" data-value="option-a" onclick="selectOption(this)">
+                                    <div class="quiz-option-radio"></div>
+                                    <span>OntologyGenerator</span>
+                                </button>
+                                <button class="quiz-option" data-value="option-b" onclick="selectOption(this)">
+                                    <div class="quiz-option-radio"></div>
+                                    <span>OasisProfileGenerator</span>
+                                </button>
+                                <button class="quiz-option" data-value="option-c" onclick="selectOption(this)">
+                                    <div class="quiz-option-radio"></div>
+                                    <span>ReportAgent</span>
+                                </button>
+                            </div>
+                            <div class="quiz-feedback" id="q2-1-feedback"></div>
+                        </div>
+
+                        <div class="quiz-question-block" data-question="q2" data-correct="option-a">
+                            <h3 class="quiz-question">为什么配置不直接写在代码里？</h3>
+                            <div class="quiz-options">
+                                <button class="quiz-option" data-value="option-a" onclick="selectOption(this)">
+                                    <div class="quiz-option-radio"></div>
+                                    <span>安全考虑，避免把 API 密钥等敏感信息提交到代码仓库</span>
+                                </button>
+                                <button class="quiz-option" data-value="option-b" onclick="selectOption(this)">
+                                    <div class="quiz-option-radio"></div>
+                                    <span>这样代码看起来更短</span>
+                                </button>
+                                <button class="quiz-option" data-value="option-c" onclick="selectOption(this)">
+                                    <div class="quiz-option-radio"></div>
+                                    <span>这是 Python 的强制要求</span>
+                                </button>
+                            </div>
+                            <div class="quiz-feedback" id="q2-2-feedback"></div>
+                        </div>
+
+                        <button class="quiz-check-btn" onclick="checkQuiz('quiz-2')">检查答案</button>
+                        <button class="quiz-reset-btn" onclick="resetQuiz('quiz-2')">重新答题</button>
+                        <div class="quiz-overall-feedback" id="quiz-2-overall"></div>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </section>
+
+    <section class="module" id="module-3" style="background: var(--color-bg)">
+        <div class="module-content">
+            <header class="module-header animate-in">
+                <span class="module-number">03</span>
+                <h1 class="module-title">数据流转与 API</h1>
+                <p class="module-subtitle">看前端和后端如何「对话」</p>
+            </header>
+
+            <div class="module-body stagger-children">
+                <section class="screen animate-in">
+                    <h2 class="screen-heading">API 三层设计</h2>
+                    <p>MiroFish 的 <span class="term" data-definition="API（应用程序编程接口）是不同软件组件之间通信的约定。就像餐厅的菜单：你告诉服务员你想要什么（请求），厨房做好后给你端上来（响应）。">API</span> 分为三大模块：</p>
+
+                    <div class="pattern-cards">
+                        <div class="pattern-card" style="border-top-color: var(--color-actor-1)">
+                            <div class="pattern-icon" style="background: var(--color-actor-1)">🕸️</div>
+                            <h4 class="pattern-title">/api/graph</h4>
+                            <p class="pattern-desc">图谱相关：生成本体、构建图谱、查询任务</p>
+                        </div>
+                        <div class="pattern-card" style="border-top-color: var(--color-actor-2)">
+                            <div class="pattern-icon" style="background: var(--color-actor-2)">🎮</div>
+                            <h4 class="pattern-title">/api/simulation</h4>
+                            <p class="pattern-desc">模拟相关：创建模拟、启动/停止、采访 Agent</p>
+                        </div>
+                        <div class="pattern-card" style="border-top-color: var(--color-actor-3)">
+                            <div class="pattern-icon" style="background: var(--color-actor-3)">📝</div>
+                            <h4 class="pattern-title">/api/report</h4>
+                            <p class="pattern-desc">报告相关：生成报告、下载报告、与 ReportAgent 对话</p>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="screen animate-in">
+                    <h2 class="screen-heading">数据流转演示</h2>
+                    <p>让我们看看「上传文件并生成本体」这个流程中，数据是如何流动的：</p>
+
+                    <div class="flow-animation">
+                        <div class="flow-actors">
+                            <div class="flow-actor" id="flow-actor-3-1">
+                                <div class="flow-actor-icon" style="background: var(--color-text-secondary)">👤</div>
+                                <span>用户</span>
+                            </div>
+                            <div class="flow-actor" id="flow-actor-3-2">
+                                <div class="flow-actor-icon" style="background: var(--color-actor-1)">FE</div>
+                                <span>前端</span>
+                            </div>
+                            <div class="flow-actor" id="flow-actor-3-3">
+                                <div class="flow-actor-icon" style="background: var(--color-actor-2)">API</div>
+                                <span>后端 API</span>
+                            </div>
+                            <div class="flow-actor" id="flow-actor-3-4">
+                                <div class="flow-actor-icon" style="background: var(--color-actor-4)">LLM</div>
+                                <span>LLM</span>
+                            </div>
+                        </div>
+
+                        <div class="flow-step-label" id="flow-label-3">点击「下一步」开始演示</div>
+
+                        <div class="flow-controls">
+                            <button onclick="
+                                console.log('下一步按钮点击');
+                                if (!window.flowState3) window.flowState3 = 0;
+                                const steps = [
+                                    { label: '用户上传《红楼梦》材料和预测需求', highlight: '3-1' },
+                                    { label: '前端接收文件，用 form-data 格式发送给后端', highlight: '3-2' },
+                                    { label: '后端 API 验证参数，调用 OntologyGenerator', highlight: '3-3' },
+                                    { label: 'OntologyGenerator 构建 Prompt，调用 LLM', highlight: '3-4' },
+                                    { label: 'LLM 返回 10 个实体类型和关系定义', highlight: '3-4' },
+                                    { label: '后端返回 ontology 给前端，完成！', highlight: '3-2' }
+                                ];
+                                if (window.flowState3 >= steps.length) {
+                                    window.flowState3 = 0;
+                                }
+                                document.querySelectorAll('#flow-actor-3-*').forEach(a => a.classList.remove('active'));
+                                const step = steps[window.flowState3];
+                                const el = document.getElementById('flow-actor-3-' + step.highlight);
+                                if (el) el.classList.add('active');
+                                document.getElementById('flow-label-3').textContent = step.label;
+                                window.flowState3++;
+                                document.getElementById('flow-progress-3').textContent = '步骤 ' + window.flowState3 + ' / 6';
+                            ">下一步</button>
+                            <button onclick="
+                                console.log('重新开始按钮点击');
+                                window.flowState3 = 0;
+                                document.querySelectorAll('#flow-actor-3-*').forEach(a => a.classList.remove('active'));
+                                document.getElementById('flow-label-3').textContent = '点击「下一步」开始演示';
+                                document.getElementById('flow-progress-3').textContent = '步骤 0 / 6';
+                            ">重新开始</button>
+                            <span class="flow-progress" id="flow-progress-3">步骤 0 / 6</span>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="screen animate-in">
+                    <h2 class="screen-heading">看代码：生成本体 API</h2>
+                    <p>让我们看看 <span class="term" data-definition="路由（Route）是 API 的 URL 路径，决定了请求该由哪个函数处理。就像餐厅的不同窗口：取餐口、买单处等。">/api/graph/ontology/generate</span> 这个接口的代码：</p>
+
+                    <div class="translation-block">
+                        <div class="translation-code">
+                            <span class="translation-label">CODE</span>
+                            <pre><code><span class="code-line"><span class="code-keyword">@graph_bp</span>.route(<span class="code-string">'/ontology/generate'</span>, methods=[<span class="code-string">'POST'</span>])</span>
+<span class="code-line"><span class="code-keyword">def</span> <span class="code-function">generate_ontology</span>():</span>
+<span class="code-line">    <span class="code-keyword">try</span>:</span>
+<span class="code-line">        logger.info(<span class="code-string">"=== 开始生成本体定义 ==="</span>)</span>
+<span class="code-line">        </span>
+<span class="code-line">        simulation_requirement = request.form.get(</span>
+<span class="code-line">            <span class="code-string">'simulation_requirement'</span>, <span class="code-string">''</span></span>
+<span class="code-line">        )</span>
+<span class="code-line">        </span>
+<span class="code-line">        <span class="code-keyword">if not</span> simulation_requirement:</span>
+<span class="code-line">            <span class="code-keyword">return</span> jsonify({</span>
+<span class="code-line">                <span class="code-string">"success"</span>: <span class="code-keyword">False</span>,</span>
+<span class="code-line">                <span class="code-string">"error"</span>: <span class="code-string">"请提供模拟需求描述"</span></span>
+<span class="code-line">            }), <span class="code-number">400</span></span></code></pre>
+                        </div>
+                        <div class="translation-english">
+                            <span class="translation-label">PLAIN ENGLISH</span>
+                            <div class="translation-lines">
+                                <p class="tl">这是一个装饰器，告诉 Flask：当有人访问 /ontology/generate 并且用 POST 方法时，就调用下面这个函数。</p>
+                                <p class="tl">定义函数名：generate_ontology（生成本体）。</p>
+                                <p class="tl">用 try 包裹代码，万一出错了能优雅处理。</p>
+                                <p class="tl">在日志里记录一条消息，表示开始工作了。</p>
+                                <p class="tl">（空行）</p>
+                                <p class="tl">从请求的表单数据中获取 simulation_requirement 字段。</p>
+                                <p class="tl">参数名是 'simulation_requirement'，默认值是空字符串。</p>
+                                <p class="tl">获取完成。</p>
+                                <p class="tl">（空行）</p>
+                                <p class="tl">检查：用户没有提供模拟需求吗？</p>
+                                <p class="tl">如果没有，返回一个 JSON 响应。</p>
+                                <p class="tl">success 字段设为 False，表示失败。</p>
+                                <p class="tl">error 字段告诉用户哪里错了。</p>
+                                <p class="tl">同时返回 HTTP 状态码 400，表示「客户端请求错误」。</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="screen animate-in">
+                    <h2 class="screen-heading">异步任务处理</h2>
+                    <p>构建图谱可能需要几分钟，MiroFish 是怎么处理这种「耗时操作」的？</p>
+
+                    <div class="callout callout-info">
+                        <div class="callout-icon">🧵</div>
+                        <div class="callout-content">
+                            <strong class="callout-title">后台线程模式</strong>
+                            <p>API 立即返回一个「任务 ID」，然后在后台线程中慢慢构建图谱。前端可以轮询查询任务进度。这就像你在餐厅取号，先去逛街，过一会儿再回来看看做好了没有！</p>
+                        </div>
+                    </div>
+
+                    <div class="translation-block">
+                        <div class="translation-code">
+                            <span class="translation-label">CODE</span>
+                            <pre><code><span class="code-line"><span class="code-keyword">def</span> <span class="code-function">build_task</span>():</span>
+<span class="code-line">    build_logger = get_logger(<span class="code-string">'mirofish.build'</span>)</span>
+<span class="code-line">    <span class="code-keyword">try</span>:</span>
+<span class="code-line">        builder = GraphBuilderService(</span>
+<span class="code-line">            api_key=Config.ZEP_API_KEY</span>
+<span class="code-line">        )</span>
+<span class="code-line">        graph_id = builder.create_graph(name=graph_name)</span>
+<span class="code-line">        <span class="code-comment"># ... 更多步骤 ...</span></span>
+<span class="code-line"></span>
+<span class="code-line">thread = threading.Thread(target=build_task, daemon=<span class="code-keyword">True</span>)</span>
+<span class="code-line">thread.start()</span></code></pre>
+                        </div>
+                        <div class="translation-english">
+                            <span class="translation-label">PLAIN ENGLISH</span>
+                            <div class="translation-lines">
+                                <p class="tl">定义后台要执行的任务函数。</p>
+                                <p class="tl">获取一个专门用于记录构建日志的 logger。</p>
+                                <p class="tl">同样用 try 包裹，防止出错。</p>
+                                <p class="tl">创建图谱构建服务对象。</p>
+                                <p class="tl">传入 ZEP_API_KEY 作为参数。</p>
+                                <p class="tl">服务对象创建完成。</p>
+                                <p class="tl">调用 create_graph 在 Zep Cloud 上创建一个新图谱。</p>
+                                <p class="tl">（省略了中间很多步骤：设置本体、添加文本、等待处理...）</p>
+                                <p class="tl">（空行）</p>
+                                <p class="tl">创建一个新线程，目标是运行 build_task 函数。daemon=True 表示程序退出时这个线程也跟着退出。</p>
+                                <p class="tl">启动线程！任务开始在后台运行了。</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="screen animate-in">
+                    <h2 class="screen-heading">知识检测</h2>
+                    <div class="quiz-container" id="quiz-3">
+                        <div class="quiz-question-block" data-question="q1" data-correct="option-c">
+                            <h3 class="quiz-question">对于耗时操作（如图谱构建），MiroFish 采用什么方式？</h3>
+                            <div class="quiz-options">
+                                <button class="quiz-option" data-value="option-a" onclick="selectOption(this)">
+                                    <div class="quiz-option-radio"></div>
+                                    <span>让用户一直等待，直到完成</span>
+                                </button>
+                                <button class="quiz-option" data-value="option-b" onclick="selectOption(this)">
+                                    <div class="quiz-option-radio"></div>
+                                    <span>直接返回失败，告诉用户操作太耗时</span>
+                                </button>
+                                <button class="quiz-option" data-value="option-c" onclick="selectOption(this)">
+                                    <div class="quiz-option-radio"></div>
+                                    <span>立即返回任务 ID，后台处理，前端轮询进度</span>
+                                </button>
+                            </div>
+                            <div class="quiz-feedback" id="q3-1-feedback"></div>
+                        </div>
+
+                        <div class="quiz-question-block" data-question="q2" data-correct="option-b">
+                            <h3 class="quiz-question">HTTP 400 状态码表示什么？</h3>
+                            <div class="quiz-options">
+                                <button class="quiz-option" data-value="option-a" onclick="selectOption(this)">
+                                    <div class="quiz-option-radio"></div>
+                                    <span>服务器内部出错了</span>
+                                </button>
+                                <button class="quiz-option" data-value="option-b" onclick="selectOption(this)">
+                                    <div class="quiz-option-radio"></div>
+                                    <span>客户端请求有错误（比如缺少必填参数）</span>
+                                </button>
+                                <button class="quiz-option" data-value="option-c" onclick="selectOption(this)">
+                                    <div class="quiz-option-radio"></div>
+                                    <span>请求成功</span>
+                                </button>
+                            </div>
+                            <div class="quiz-feedback" id="q3-2-feedback"></div>
+                        </div>
+
+                        <button class="quiz-check-btn" onclick="checkQuiz('quiz-3')">检查答案</button>
+                        <button class="quiz-reset-btn" onclick="resetQuiz('quiz-3')">重新答题</button>
+                        <div class="quiz-overall-feedback" id="quiz-3-overall"></div>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </section>
+
+    <section class="module" id="module-4" style="background: var(--color-bg-warm)">
+        <div class="module-content">
+            <header class="module-header animate-in">
+                <span class="module-number">04</span>
+                <h1 class="module-title">外部服务集成</h1>
+                <p class="module-subtitle">LLM、Zep Cloud 和 OASIS 如何协同工作</p>
+            </header>
+
+            <div class="module-body stagger-children">
+                <section class="screen animate-in">
+                    <h2 class="screen-heading">三驾马车</h2>
+                    <p>MiroFish 本身是一个「粘合剂」，真正的 heavy-lifting 由三个外部服务完成：</p>
+
+                    <div class="pattern-cards">
+                        <div class="pattern-card" style="border-top-color: var(--color-actor-1)">
+                            <div class="pattern-icon" style="background: var(--color-actor-1)">🧠</div>
+                            <h4 class="pattern-title">LLM</h4>
+                            <p class="pattern-desc">大语言模型 — 分析文本、生成代码、撰写报告</p>
+                        </div>
+                        <div class="pattern-card" style="border-top-color: var(--color-actor-2)">
+                            <div class="pattern-icon" style="background: var(--color-actor-2)">🕸️</div>
+                            <h4 class="pattern-title">Zep Cloud</h4>
+                            <p class="pattern-desc">知识图谱平台 — 存储实体和关系，做 GraphRAG</p>
+                        </div>
+                        <div class="pattern-card" style="border-top-color: var(--color-actor-3)">
+                            <div class="pattern-icon" style="background: var(--color-actor-3)">🏝️</div>
+                            <h4 class="pattern-title">OASIS</h4>
+                            <p class="pattern-desc">社交模拟框架 — 运行多智能体社会模拟</p>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="screen animate-in">
+                    <h2 class="screen-heading">OntologyGenerator：设计「世界规则」</h2>
+                    <p>让我们看看本体生成器是如何工作的。这是整个流程的第一步：</p>
+
+                    <div class="translation-block">
+                        <div class="translation-code">
+                            <span class="translation-label">CODE</span>
+                            <pre><code><span class="code-line">ONTOLOGY_SYSTEM_PROMPT = <span class="code-string">"""你是一个专业的知识图谱本体设计专家...</span></span>
+<span class="code-line"></span>
+<span class="code-line"><span class="code-keyword">class</span> <span class="code-function">OntologyGenerator</span>:</span>
+<span class="code-line">    <span class="code-keyword">def</span> <span class="code-function">generate</span>(</span>
+<span class="code-line">        <span class="code-keyword">self</span>,</span>
+<span class="code-line">        document_texts: List[str],</span>
+<span class="code-line">        simulation_requirement: str</span>
+<span class="code-line">    ) -&gt; Dict[str, Any]:</span>
+<span class="code-line">        messages = [</span>
+<span class="code-line">            {<span class="code-string">"role"</span>: <span class="code-string">"system"</span>, </span>
+<span class="code-line">             <span class="code-string">"content"</span>: ONTOLOGY_SYSTEM_PROMPT},</span>
+<span class="code-line">            {<span class="code-string">"role"</span>: <span class="code-string">"user"</span>, </span>
+<span class="code-line">             <span class="code-string">"content"</span>: user_message}</span>
+<span class="code-line">        ]</span>
+<span class="code-line">        result = <span class="code-keyword">self</span>.llm_client.chat_json(</span>
+<span class="code-line">            messages=messages,</span>
+<span class="code-line">            temperature=<span class="code-number">0.3</span>,</span>
+<span class="code-line">            max_tokens=<span class="code-number">4096</span></span>
+<span class="code-line">        )</span></code></pre>
+                        </div>
+                        <div class="translation-english">
+                            <span class="translation-label">PLAIN ENGLISH</span>
+                            <div class="translation-lines">
+                                <p class="tl">定义一个超长的系统提示词，告诉 LLM 它的身份和任务。</p>
+                                <p class="tl">（空行）</p>
+                                <p class="tl">定义 OntologyGenerator 类。</p>
+                                <p class="tl">定义 generate 方法，这是主要接口。</p>
+                                <p class="tl">self 参数（Python 的惯例）。</p>
+                                <p class="tl">接收文档文本列表作为输入。</p>
+                                <p class="tl">接收模拟需求描述作为输入。</p>
+                                <p class="tl">返回值是一个字典。</p>
+                                <p class="tl">构建发送给 LLM 的消息列表。</p>
+                                <p class="tl">第一条是 system 消息，告诉 LLM 它是谁。</p>
+                                <p class="tl">设置 role 为 "system"。</p>
+                                <p class="tl">content 就是刚才定义的那个超长提示词。</p>
+                                <p class="tl">第二条是 user 消息，包含用户的材料和需求。</p>
+                                <p class="tl">设置 role 为 "user"。</p>
+                                <p class="tl">content 是构建好的用户消息。</p>
+                                <p class="tl">消息列表构建完成。</p>
+                                <p class="tl">调用 llm_client 的 chat_json 方法。</p>
+                                <p class="tl">传入刚才的消息列表。</p>
+                                <p class="tl">temperature=0.3，较低的温度让输出更稳定、更少随机性。</p>
+                                <p class="tl">max_tokens=4096，允许 LLM 输出较长的 JSON。</p>
+                                <p class="tl">LLM 调用完成，返回结果。</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="callout callout-accent">
+                        <div class="callout-icon">💡</div>
+                        <div class="callout-content">
+                            <strong class="callout-title">关键洞察：温度参数</strong>
+                            <p>Temperature（温度）控制 LLM 的随机性：0.1-0.3 适合代码和结构化输出（JSON），0.7-1.0 适合创意写作。本体生成需要稳定的 JSON，所以用 0.3！</p>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="screen animate-in">
+                    <h2 class="screen-heading">关键规则：10 个实体类型</h2>
+                    <p>OntologyGenerator 有一个非常严格的规则——必须正好生成 10 个实体类型：</p>
+
+                    <div class="step-cards">
+                        <div class="step-card">
+                            <div class="step-num">8</div>
+                            <div class="step-body">
+                                <strong>具体类型</strong>
+                                <p>根据文本内容设计，比如 Student、Professor、Company、MediaOutlet 等</p>
+                            </div>
+                        </div>
+                        <div class="step-card">
+                            <div class="step-num">2</div>
+                            <div class="step-body">
+                                <strong>兜底类型</strong>
+                                <p>Person（任何个人）和 Organization（任何组织），放在最后两位</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <p>为什么需要兜底类型？因为文本中会出现各种人物：「路人甲」、「某位网友」、「一个小公司」——这些无法归类到具体类型时，就用兜底类型！</p>
+                </section>
+
+                <section class="screen animate-in">
+                    <h2 class="screen-heading">知识检测</h2>
+                    <div class="quiz-container" id="quiz-4">
+                        <div class="quiz-question-block" data-question="q1" data-correct="option-b">
+                            <h3 class="quiz-question">OntologyGenerator 要求生成多少个实体类型？</h3>
+                            <div class="quiz-options">
+                                <button class="quiz-option" data-value="option-a" onclick="selectOption(this)">
+                                    <div class="quiz-option-radio"></div>
+                                    <span>任意数量，看文本内容</span>
+                                </button>
+                                <button class="quiz-option" data-value="option-b" onclick="selectOption(this)">
+                                    <div class="quiz-option-radio"></div>
+                                    <span>正好 10 个（8 个具体 + 2 个兜底）</span>
+                                </button>
+                                <button class="quiz-option" data-value="option-c" onclick="selectOption(this)">
+                                    <div class="quiz-option-radio"></div>
+                                    <span>至少 5 个</span>
+                                </button>
+                            </div>
+                            <div class="quiz-feedback" id="q4-1-feedback"></div>
+                        </div>
+
+                        <div class="quiz-question-block" data-question="q2" data-correct="option-a">
+                            <h3 class="quiz-question">temperature 设为 0.3 意味着什么？</h3>
+                            <div class="quiz-options">
+                                <button class="quiz-option" data-value="option-a" onclick="selectOption(this)">
+                                    <div class="quiz-option-radio"></div>
+                                    <span>输出更稳定、更少随机性，适合生成 JSON</span>
+                                </button>
+                                <button class="quiz-option" data-value="option-b" onclick="selectOption(this)">
+                                    <div class="quiz-option-radio"></div>
+                                    <span>输出更有创意，适合写小说</span>
+                                </button>
+                                <button class="quiz-option" data-value="option-c" onclick="selectOption(this)">
+                                    <div class="quiz-option-radio"></div>
+                                    <span>LLM 会跑得更快</span>
+                                </button>
+                            </div>
+                            <div class="quiz-feedback" id="q4-2-feedback"></div>
+                        </div>
+
+                        <button class="quiz-check-btn" onclick="checkQuiz('quiz-4')">检查答案</button>
+                        <button class="quiz-reset-btn" onclick="resetQuiz('quiz-4')">重新答题</button>
+                        <div class="quiz-overall-feedback" id="quiz-4-overall"></div>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </section>
+
+    <section class="module" id="module-5" style="background: var(--color-bg)">
+        <div class="module-content">
+            <header class="module-header animate-in">
+                <span class="module-number">05</span>
+                <h1 class="module-title">关键代码解析</h1>
+                <p class="module-subtitle">深入理解几个核心函数</p>
+            </header>
+
+            <div class="module-body stagger-children">
+                <section class="screen animate-in">
+                    <h2 class="screen-heading">文本分块策略</h2>
+                    <p>知识图谱构建的第一步是把长文本切成小块。为什么要切？因为 LLM 和 Zep 都有输入长度限制！</p>
+
+                    <div class="callout callout-info">
+                        <div class="callout-icon">📄</div>
+                        <div class="callout-content">
+                            <strong class="callout-title">分块 + 重叠</strong>
+                            <p>默认设置是 chunk_size=500（每块500字符），chunk_overlap=50（块与块之间重叠50字符）。重叠很重要！它能防止重要信息在切分处丢失——就像拼拼图时，两块之间要有一点重叠才能对齐！</p>
+                        </div>
+                    </div>
+
+                    <div class="translation-block">
+                        <div class="translation-code">
+                            <span class="translation-label">CODE</span>
+                            <pre><code><span class="code-line">DEFAULT_CHUNK_SIZE = <span class="code-number">500</span></span>
+<span class="code-line">DEFAULT_CHUNK_OVERLAP = <span class="code-number">50</span></span>
+<span class="code-line"></span>
+<span class="code-line">chunks = TextProcessor.split_text(</span>
+<span class="code-line">    text, </span>
+<span class="code-line">    chunk_size=chunk_size, </span>
+<span class="code-line">    overlap=chunk_overlap</span>
+<span class="code-line">)</span>
+<span class="code-line"></span>
+<span class="code-line">episode_uuids = builder.add_text_batches(</span>
+<span class="code-line">    graph_id, </span>
+<span class="code-line">    chunks,</span>
+<span class="code-line">    batch_size=<span class="code-number">3</span>,</span>
+<span class="code-line">    progress_callback=add_progress_callback</span>
+<span class="code-line">)</span></code></pre>
+                        </div>
+                        <div class="translation-english">
+                            <span class="translation-label">PLAIN ENGLISH</span>
+                            <div class="translation-lines">
+                                <p class="tl">定义默认的块大小是 500 字符。</p>
+                                <p class="tl">定义默认的重叠大小是 50 字符。</p>
+                                <p class="tl">（空行）</p>
+                                <p class="tl">调用 TextProcessor.split_text 来切分文本。</p>
+                                <p class="tl">传入要切分的文本。</p>
+                                <p class="tl">设置块大小。</p>
+                                <p class="tl">设置重叠大小。</p>
+                                <p class="tl">切分完成，得到 chunks 列表。</p>
+                                <p class="tl">（空行）</p>
+                                <p class="tl">调用 builder.add_text_batches 批量添加文本块。</p>
+                                <p class="tl">传入图谱 ID。</p>
+                                <p class="tl">传入刚才切好的块列表。</p>
+                                <p class="tl">batch_size=3 表示每次添加 3 块，避免请求太大。</p>
+                                <p class="tl">传入进度回调函数，实时更新前端显示的进度。</p>
+                                <p class="tl">添加完成，得到每个文本块的 UUID 列表。</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="screen animate-in">
+                    <h2 class="screen-heading">项目状态机</h2>
+                    <p>MiroFish 用 <span class="term" data-definition="状态机（State Machine）是一种设计模式：对象在不同状态之间切换，每个状态有明确的转换规则。就像电梯：静止→开门→关门→上升→...">状态机</span> 来管理项目生命周期：</p>
+
+                    <div class="flow-steps" style="display: flex; align-items: center; gap: var(--space-3); flex-wrap: wrap;">
+                        <div class="flow-step" style="text-align: center; padding: var(--space-4); background: var(--color-surface); border-radius: var(--radius-md); box-shadow: var(--shadow-sm);">
+                            <div style="font-family: var(--font-display); font-weight: 700;">CREATED</div>
+                            <p style="margin: var(--space-1) 0 0; font-size: var(--text-sm); color: var(--color-text-secondary);">已创建</p>
+                        </div>
+                        <div style="font-size: var(--text-xl); color: var(--color-accent);">→</div>
+                        <div class="flow-step" style="text-align: center; padding: var(--space-4); background: var(--color-surface); border-radius: var(--radius-md); box-shadow: var(--shadow-sm);">
+                            <div style="font-family: var(--font-display); font-weight: 700;">ONTOLOGY_GENERATED</div>
+                            <p style="margin: var(--space-1) 0 0; font-size: var(--text-sm); color: var(--color-text-secondary);">本体已生成</p>
+                        </div>
+                        <div style="font-size: var(--text-xl); color: var(--color-accent);">→</div>
+                        <div class="flow-step" style="text-align: center; padding: var(--space-4); background: var(--color-surface); border-radius: var(--radius-md); box-shadow: var(--shadow-sm);">
+                            <div style="font-family: var(--font-display); font-weight: 700;">GRAPH_BUILDING</div>
+                            <p style="margin: var(--space-1) 0 0; font-size: var(--text-sm); color: var(--color-text-secondary);">图谱构建中</p>
+                        </div>
+                        <div style="font-size: var(--text-xl); color: var(--color-accent);">→</div>
+                        <div class="flow-step" style="text-align: center; padding: var(--space-4); background: var(--color-surface); border-radius: var(--radius-md); box-shadow: var(--shadow-sm);">
+                            <div style="font-family: var(--font-display); font-weight: 700;">GRAPH_COMPLETED</div>
+                            <p style="margin: var(--space-1) 0 0; font-size: var(--text-sm); color: var(--color-text-secondary);">图谱完成</p>
+                        </div>
+                    </div>
+
+                    <p style="margin-top: var(--space-6);">还有一个 <strong>FAILED</strong> 状态——任何步骤出错都会跳到这里！</p>
+                </section>
+
+                <section class="screen animate-in">
+                    <h2 class="screen-heading">知识检测</h2>
+                    <div class="quiz-container" id="quiz-5">
+                        <div class="quiz-question-block" data-question="q1" data-correct="option-c">
+                            <h3 class="quiz-question">文本分块时，为什么需要 overlap（重叠）？</h3>
+                            <div class="quiz-options">
+                                <button class="quiz-option" data-value="option-a" onclick="selectOption(this)">
+                                    <div class="quiz-option-radio"></div>
+                                    <span>没有原因，这是一个历史遗留问题</span>
+                                </button>
+                                <button class="quiz-option" data-value="option-b" onclick="selectOption(this)">
+                                    <div class="quiz-option-radio"></div>
+                                    <span>让文本块更短</span>
+                                </button>
+                                <button class="quiz-option" data-value="option-c" onclick="selectOption(this)">
+                                    <div class="quiz-option-radio"></div>
+                                    <span>防止重要信息在切分处丢失，帮助对齐上下文</span>
+                                </button>
+                            </div>
+                            <div class="quiz-feedback" id="q5-1-feedback"></div>
+                        </div>
+
+                        <div class="quiz-question-block" data-question="q2" data-correct="option-b">
+                            <h3 class="quiz-question">状态机的好处是什么？</h3>
+                            <div class="quiz-options">
+                                <button class="quiz-option" data-value="option-a" onclick="selectOption(this)">
+                                    <div class="quiz-option-radio"></div>
+                                    <span>代码运行得更快</span>
+                                </button>
+                                <button class="quiz-option" data-value="option-b" onclick="selectOption(this)">
+                                    <div class="quiz-option-radio"></div>
+                                    <span>明确每个步骤能做什么、不能做什么，防止逻辑错误</span>
+                                </button>
+                                <button class="quiz-option" data-value="option-c" onclick="selectOption(this)">
+                                    <div class="quiz-option-radio"></div>
+                                    <span>减少内存使用</span>
+                                </button>
+                            </div>
+                            <div class="quiz-feedback" id="q5-2-feedback"></div>
+                        </div>
+
+                        <button class="quiz-check-btn" onclick="checkQuiz('quiz-5')">检查答案</button>
+                        <button class="quiz-reset-btn" onclick="resetQuiz('quiz-5')">重新答题</button>
+                        <div class="quiz-overall-feedback" id="quiz-5-overall"></div>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </section>
+
+    <section class="module" id="module-6" style="background: var(--color-bg-warm)">
+        <div class="module-content">
+            <header class="module-header animate-in">
+                <span class="module-number">06</span>
+                <h1 class="module-title">架构总览与调试</h1>
+                <p class="module-subtitle">把所有知识串起来，并学习如何 debug</p>
+            </header>
+
+            <div class="module-body stagger-children">
+                <section class="screen animate-in">
+                    <h2 class="screen-heading">完整架构图</h2>
+                    <p>现在让我们把所有东西串起来，看看完整的数据流：</p>
+
+                    <div class="icon-rows">
+                        <div class="icon-row">
+                            <div class="icon-circle" style="background: var(--color-text-secondary)">👤</div>
+                            <div>
+                                <strong>用户</strong>
+                                <p>上传材料、描述预测需求</p>
+                            </div>
+                        </div>
+                        <div class="icon-row">
+                            <div class="icon-circle" style="background: var(--color-actor-1)">🌐</div>
+                            <div>
+                                <strong>Vue 3 前端</strong>
+                                <p>用户界面，调用后端 API</p>
+                            </div>
+                        </div>
+                        <div class="icon-row">
+                            <div class="icon-circle" style="background: var(--color-actor-2)">🔌</div>
+                            <div>
+                                <strong>Flask API 层</strong>
+                                <p>接收请求，验证参数，返回响应</p>
+                            </div>
+                        </div>
+                        <div class="icon-row">
+                            <div class="icon-circle" style="background: var(--color-actor-3)">⚙️</div>
+                            <div>
+                                <strong>Services 服务层</strong>
+                                <p>OntologyGenerator、GraphBuilder、SimulationManager...</p>
+                            </div>
+                        </div>
+                        <div class="icon-row">
+                            <div class="icon-circle" style="background: var(--color-actor-4)">☁️</div>
+                            <div>
+                                <strong>外部服务</strong>
+                                <p>LLM、Zep Cloud、OASIS</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="screen animate-in">
+                    <h2 class="screen-heading">调试指南：常见问题</h2>
+                    <p>当系统出问题时，从哪里开始查？这里有一份「排查清单」：</p>
+
+                    <div class="pattern-cards">
+                        <div class="pattern-card" style="border-top-color: var(--color-error)">
+                            <div class="pattern-icon" style="background: var(--color-error)">🔑</div>
+                            <h4 class="pattern-title">检查 .env</h4>
+                            <p class="pattern-desc">LLM_API_KEY 和 ZEP_API_KEY 配置了吗？</p>
+                        </div>
+                        <div class="pattern-card" style="border-top-color: var(--color-info)">
+                            <div class="pattern-icon" style="background: var(--color-info)">📝</div>
+                            <h4 class="pattern-title">看日志</h4>
+                            <p class="pattern-desc">后端终端输出了什么错误信息？</p>
+                        </div>
+                        <div class="pattern-card" style="border-top-color: var(--color-success)">
+                            <div class="pattern-icon" style="background: var(--color-success)">🌐</div>
+                            <h4 class="pattern-title">检查网络</h4>
+                            <p class="pattern-desc">能访问 Zep Cloud 和 LLM API 吗？</p>
+                        </div>
+                        <div class="pattern-card" style="border-top-color: var(--color-actor-4)">
+                            <div class="pattern-icon" style="background: var(--color-actor-4)">📦</div>
+                            <h4 class="pattern-title">检查依赖</h4>
+                            <p class="pattern-desc">npm install 和 uv sync 都执行了吗？</p>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="screen animate-in">
+                    <h2 class="screen-heading">给 AI 编码者的建议</h2>
+                    <p>如果你想用 AI 来修改或扩展 MiroFish，这里有一些和 AI 沟通的技巧：</p>
+
+                    <div class="callout callout-accent">
+                        <div class="callout-icon">🎯</div>
+                        <div class="callout-content">
+                            <strong class="callout-title">精准描述你想要什么</strong>
+                            <p>不要说「加一个新功能」，要说：「在 /api/simulation 下加一个新接口 GET /api/simulation/&lt;simulation_id&gt;/stats，返回当前模拟的统计数据，包括 Agent 数量、已运行轮数、消息总数。用 Project 模型中的 existing_simulation_data 字段来存储。」</p>
+                        </div>
+                    </div>
+
+                    <div class="callout callout-info">
+                        <div class="callout-icon">📁</div>
+                        <div class="callout-content">
+                            <strong class="callout-title">告诉 AI 看哪些文件</strong>
+                            <p>「参考 backend/app/api/graph.py 的结构，写一个类似的接口」比让它自己瞎找要好得多！</p>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="screen animate-in">
+                    <h2 class="screen-heading">毕业检测！</h2>
+                    <p>最后一个测验，看看你是否掌握了 MiroFish 的精髓：</p>
+
+                    <div class="quiz-container" id="quiz-6">
+                        <div class="quiz-question-block" data-question="q1" data-correct="option-a">
+                            <h3 class="quiz-question">你想添加一个新功能：在模拟过程中实时查看所有 Agent 的对话历史。你会从哪里开始？</h3>
+                            <div class="quiz-options">
+                                <button class="quiz-option" data-value="option-a" onclick="selectOption(this)">
+                                    <div class="quiz-option-radio"></div>
+                                    <span>先看 backend/app/api/simulation.py，了解现有的模拟相关接口</span>
+                                </button>
+                                <button class="quiz-option" data-value="option-b" onclick="selectOption(this)">
+                                    <div class="quiz-option-radio"></div>
+                                    <span>直接开始写新代码，不用看现有结构</span>
+                                </button>
+                                <button class="quiz-option" data-value="option-c" onclick="selectOption(this)">
+                                    <div class="quiz-option-radio"></div>
+                                    <span>先重写整个后端，按自己的风格来</span>
+                                </button>
+                            </div>
+                            <div class="quiz-feedback" id="q6-1-feedback"></div>
+                        </div>
+
+                        <div class="quiz-question-block" data-question="q2" data-correct="option-b">
+                            <h3 class="quiz-question">用户报告「图谱构建一直卡在 55%」，你首先会做什么？</h3>
+                            <div class="quiz-options">
+                                <button class="quiz-option" data-value="option-a" onclick="selectOption(this)">
+                                    <div class="quiz-option-radio"></div>
+                                    <span>重启电脑</span>
+                                </button>
+                                <button class="quiz-option" data-value="option-b" onclick="selectOption(this)">
+                                    <div class="quiz-option-radio"></div>
+                                    <span>查看后端日志，看 55% 之后在做什么</span>
+                                </button>
+                                <button class="quiz-option" data-value="option-c" onclick="selectOption(this)">
+                                    <div class="quiz-option-radio"></div>
+                                    <span>删除所有代码重新安装</span>
+                                </button>
+                            </div>
+                            <div class="quiz-feedback" id="q6-2-feedback"></div>
+                        </div>
+
+                        <button class="quiz-check-btn" onclick="checkQuiz('quiz-6')">检查答案</button>
+                        <button class="quiz-reset-btn" onclick="resetQuiz('quiz-6')">重新答题</button>
+                        <div class="quiz-overall-feedback" id="quiz-6-overall"></div>
+                    </div>
+                </section>
+
+                <section class="screen animate-in" style="text-align: center; padding: var(--space-16) 0;">
+                    <h2 class="screen-heading">🎉 恭喜你完成课程！</h2>
+                    <p style="font-size: var(--text-lg); margin-bottom: var(--space-8);">你现在了解了 MiroFish 如何从材料中提取知识、构建图谱、生成人设、运行模拟、最终产出预测报告。</p>
+
+                    <div class="pattern-cards">
+                        <div class="pattern-card">
+                            <div class="pattern-icon">🧠</div>
+                            <h4 class="pattern-title">知识图谱</h4>
+                            <p class="pattern-desc">你理解了本体设计和 GraphRAG</p>
+                        </div>
+                        <div class="pattern-card">
+                            <div class="pattern-icon">🎭</div>
+                            <h4 class="pattern-title">多智能体</h4>
+                            <p class="pattern-desc">你了解了 Agent Profile 和社会模拟</p>
+                        </div>
+                        <div class="pattern-card">
+                            <div class="pattern-icon">🔧</div>
+                            <h4 class="pattern-title">工程实践</h4>
+                            <p class="pattern-desc">你学到了状态机、异步任务、API 设计</p>
+                        </div>
+                    </div>
+
+                    <p style="margin-top: var(--space-8); color: var(--color-text-secondary);">现在去探索真实的代码吧，或者用 AI 来帮你添加新功能！</p>
+                </section>
+            </div>
+        </div>
+    </section>
+
+    <script>
+        // 等待 DOM 加载完成
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('课程页面加载完成！');
+
+            // ========== 导航和进度条 ==========
+            const progressBar = document.querySelector('.progress-bar');
+            const navDots = document.querySelectorAll('.nav-dot');
+            const modules = document.querySelectorAll('.module');
+
+            function updateProgressBar() {
+                const scrollTop = window.scrollY;
+                const scrollHeight = document.documentElement.scrollHeight - window.innerHeight;
+                const progress = scrollHeight > 0 ? (scrollTop / scrollHeight) * 100 : 0;
+                if (progressBar) {
+                    progressBar.style.width = progress + '%';
+                }
+            }
+
+            function updateNavDots() {
+                const scrollPos = window.scrollY + window.innerHeight / 3;
+                let currentIndex = 0;
+
+                modules.forEach((module, index) => {
+                    const moduleTop = module.offsetTop;
+                    if (scrollPos >= moduleTop) {
+                        currentIndex = index;
+                    }
+                });
+
+                navDots.forEach((dot, index) => {
+                    dot.classList.remove('current', 'visited');
+                    if (index === currentIndex) {
+                        dot.classList.add('current');
+                    } else if (index < currentIndex) {
+                        dot.classList.add('visited');
+                    }
+                });
+            }
+
+            window.addEventListener('scroll', () => {
+                requestAnimationFrame(updateProgressBar);
+                requestAnimationFrame(updateNavDots);
+            }, { passive: true });
+
+            navDots.forEach(dot => {
+                dot.addEventListener('click', () => {
+                    const targetId = dot.dataset.target;
+                    const target = document.getElementById(targetId);
+                    if (target) {
+                        target.scrollIntoView({ behavior: 'smooth' });
+                    }
+                });
+            });
+
+            // ========== 滚动动画 ==========
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, { rootMargin: '0px 0px -10% 0px', threshold: 0.1 });
+
+            document.querySelectorAll('.animate-in').forEach(el => observer.observe(el));
+
+            document.querySelectorAll('.stagger-children').forEach(parent => {
+                Array.from(parent.children).forEach((child, i) => {
+                    child.style.setProperty('--stagger-index', i);
+                });
+            });
+
+            // ========== 键盘导航 ==========
+            document.addEventListener('keydown', (e) => {
+                if (['INPUT', 'TEXTAREA'].includes(e.target.tagName)) return;
+                if (e.key === 'ArrowDown' || e.key === 'ArrowRight') {
+                    const current = document.querySelector('.nav-dot.current');
+                    if (current) {
+                        const next = current.nextElementSibling;
+                        if (next && next.classList.contains('nav-dot')) {
+                            next.click();
+                        }
+                    }
+                    e.preventDefault();
+                }
+                if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') {
+                    const current = document.querySelector('.nav-dot.current');
+                    if (current) {
+                        const prev = current.previousElementSibling;
+                        if (prev && prev.classList.contains('nav-dot')) {
+                            prev.click();
+                        }
+                    }
+                    e.preventDefault();
+                }
+            });
+
+            // ========== 测验功能 ==========
+            window.selectOption = function(btn) {
+                console.log('选择答案:', btn);
+                const block = btn.closest('.quiz-question-block');
+                if (!block) return;
+                block.querySelectorAll('.quiz-option').forEach(o => o.classList.remove('selected'));
+                btn.classList.add('selected');
+            };
+
+            function getExplanation(block, isCorrect) {
+                const question = block.dataset.question;
+                const explanations = {
+                    'q1': {
+                        correct: '没错！第一步是构建知识图谱，从材料中提取实体和关系。',
+                        incorrect: '不对哦。第一步是图谱构建——从材料中提取实体和关系，这样后续步骤才有基础。'
+                    },
+                    'q2': {
+                        correct: '正确！MiroFish 在 Twitter 和 Reddit 两个平台上并行模拟。',
+                        incorrect: '是 Twitter 和 Reddit 哦——这两个是 OASIS 框架原生支持的平台。'
+                    },
+                    'q2-1': {
+                        correct: '对！OasisProfileGenerator 负责为每个实体生成 Agent Profile（人设）。',
+                        incorrect: '是 OasisProfileGenerator 哦！OntologyGenerator 生成的是实体类型定义，不是具体人设。'
+                    },
+                    'q2-2': {
+                        correct: '完全正确！安全第一——密钥不能提交到代码仓库，所以用环境变量。',
+                        incorrect: '主要原因是安全哦！API 密钥是敏感信息，不能写在代码里提交到 GitHub。'
+                    },
+                    'q3-1': {
+                        correct: '没错！后台线程 + 任务 ID + 轮询是处理耗时操作的经典模式。',
+                        incorrect: 'MiroFish 用了后台线程模式：立即返回任务 ID，后台慢慢处理，前端轮询进度。'
+                    },
+                    'q3-2': {
+                        correct: '对！400 表示客户端请求错误——比如用户漏填了必填参数。',
+                        incorrect: '400 是客户端错误（Bad Request），500 才是服务器内部错误。'
+                    },
+                    'q4-1': {
+                        correct: '完全正确！正好 10 个：8 个具体类型 + Person + Organization。',
+                        incorrect: '必须正好 10 个：8 个根据文本设计的具体类型，加上 2 个兜底类型（Person 和 Organization）。'
+                    },
+                    'q4-2': {
+                        correct: '对！低温度让输出更稳定、可预测，适合生成 JSON 这种结构化数据。',
+                        incorrect: '低温度（0.1-0.3）适合需要稳定输出的场景，比如生成 JSON；高温度（0.7+）适合创意写作。'
+                    },
+                    'q5-1': {
+                        correct: '没错！重叠能防止重要信息被切断，帮助保持上下文连贯性。',
+                        incorrect: '重叠是为了防止重要信息在切分处丢失——就像拼图要有重叠才能对齐！'
+                    },
+                    'q5-2': {
+                        correct: '对！状态机能明确每个状态能做什么、不能做什么，防止逻辑混乱。',
+                        incorrect: '状态机主要好处是逻辑清晰——比如图谱还没构建完时，你就不能启动模拟！'
+                    },
+                    'q6-1': {
+                        correct: '聪明！先看现有代码结构，再决定在哪里加新功能。',
+                        incorrect: '最好先看现有的 simulation.py 接口是怎么设计的，保持风格一致！'
+                    },
+                    'q6-2': {
+                        correct: '就是这样！日志是调试的第一道线索。',
+                        incorrect: '先看后端日志——55% 正好是「等待 Zep 处理」的阶段，可能是 Zep 那边慢了！'
+                    }
+                };
+
+                const key = question;
+                if (explanations[key]) {
+                    return isCorrect ? explanations[key].correct : explanations[key].incorrect;
+                }
+                return isCorrect ? '你答对了！' : '再想想看...';
+            }
+
+            window.checkQuiz = function(sectionId) {
+                console.log('检查测验:', sectionId);
+                const container = document.getElementById(sectionId);
+                if (!container) {
+                    console.error('找不到测验容器:', sectionId);
+                    return;
+                }
+                const questions = container.querySelectorAll('.quiz-question-block');
+                let correct = 0;
+                let answered = 0;
+
+                questions.forEach(q => {
+                    const selected = q.querySelector('.quiz-option.selected');
+                    const feedback = q.querySelector('.quiz-feedback');
+                    const correctValue = q.dataset.correct;
+
+                    if (!selected) {
+                        if (feedback) {
+                            feedback.textContent = '先选一个答案呀！';
+                            feedback.className = 'quiz-feedback show error';
+                        }
+                        return;
+                    }
+
+                    answered++;
+
+                    if (selected.dataset.value === correctValue) {
+                        correct++;
+                        selected.classList.add('correct');
+                        if (feedback) {
+                            feedback.innerHTML = '<strong>Exactly!</strong> ' + getExplanation(q, true);
+                            feedback.className = 'quiz-feedback show success';
+                        }
+                    } else {
+                        selected.classList.add('incorrect');
+                        const correctOption = q.querySelector(`[data-value="${correctValue}"]`);
+                        if (correctOption) correctOption.classList.add('correct');
+                        if (feedback) {
+                            feedback.innerHTML = '<strong>Not quite.</strong> ' + getExplanation(q, false);
+                            feedback.className = 'quiz-feedback show error';
+                        }
+                    }
+
+                    q.querySelectorAll('.quiz-option').forEach(o => o.disabled = true);
+                });
+
+                const overall = document.getElementById(sectionId + '-overall');
+                if (overall && answered === questions.length) {
+                    overall.textContent = `你答对了 ${correct}/${questions.length} 题！`;
+                    overall.style.marginTop = 'var(--space-4)';
+                    overall.style.fontWeight = '600';
+                    overall.style.color = correct === questions.length ? 'var(--color-success)' : 'var(--color-text)';
+                }
+            };
+
+            window.resetQuiz = function(sectionId) {
+                console.log('重置测验:', sectionId);
+                const container = document.getElementById(sectionId);
+                if (!container) return;
+                const questions = container.querySelectorAll('.quiz-question-block');
+
+                questions.forEach(q => {
+                    q.querySelectorAll('.quiz-option').forEach(o => {
+                        o.classList.remove('selected', 'correct', 'incorrect');
+                        o.disabled = false;
+                    });
+                    const feedback = q.querySelector('.quiz-feedback');
+                    if (feedback) {
+                        feedback.className = 'quiz-feedback';
+                        feedback.textContent = '';
+                    }
+                });
+
+                const overall = document.getElementById(sectionId + '-overall');
+                if (overall) overall.textContent = '';
+            };
+
+            // ========== 群聊动画 ==========
+            const chatStates = {};
+
+            function getChatActors(num) {
+                return {
+                    'user': { initials: '👤', color: 'var(--color-text-secondary)' },
+                    'frontend': { initials: 'FE', color: 'var(--color-actor-1)' },
+                    'ontology': { initials: 'OG', color: 'var(--color-actor-2)' },
+                    'graph': { initials: 'GB', color: 'var(--color-actor-3)' },
+                    'zep': { initials: 'ZP', color: 'var(--color-actor-4)' }
+                };
+            }
+
+            window.playChatNext = function(num) {
+                console.log('播放群聊下一步:', num);
+                if (!chatStates[num]) chatStates[num] = { index: 0 };
+                const state = chatStates[num];
+
+                const messages = document.querySelectorAll(`#chat-messages-${num} .chat-message`);
+                if (state.index >= messages.length) return;
+
+                const msg = messages[state.index];
+                const sender = msg.dataset.sender;
+                const actors = getChatActors(num);
+
+                const typing = document.getElementById(`chat-typing-${num}`);
+                const avatar = document.getElementById(`typing-avatar-${num}`);
+
+                if (actors[sender] && avatar) {
+                    avatar.textContent = actors[sender].initials;
+                    avatar.style.background = actors[sender].color;
+                }
+                if (typing) typing.style.display = 'flex';
+
+                setTimeout(() => {
+                    if (typing) typing.style.display = 'none';
+                    msg.style.display = 'flex';
+                    msg.style.animation = 'fadeSlideUp 0.3s var(--ease-out)';
+                    state.index++;
+
+                    const progress = document.getElementById(`chat-progress-${num}`);
+                    if (progress) progress.textContent = `${state.index} / ${messages.length} 条消息`;
+                }, 800);
+            };
+
+            window.playChatAll = function(num) {
+                console.log('播放全部群聊:', num);
+                if (!chatStates[num]) chatStates[num] = { index: 0 };
+
+                const interval = setInterval(() => {
+                    const messages = document.querySelectorAll(`#chat-messages-${num} .chat-message`);
+                    if (chatStates[num].index >= messages.length) {
+                        clearInterval(interval);
+                        return;
+                    }
+                    playChatNext(num);
+                }, 1500);
+            };
+
+            window.resetChat = function(num) {
+                console.log('重置群聊:', num);
+                chatStates[num] = { index: 0 };
+                const messages = document.querySelectorAll(`#chat-messages-${num} .chat-message`);
+                messages.forEach(m => {
+                    m.style.display = 'none';
+                    m.style.animation = '';
+                });
+                const typing = document.getElementById(`chat-typing-${num}`);
+                if (typing) typing.style.display = 'none';
+                const progress = document.getElementById(`chat-progress-${num}`);
+                if (progress) progress.textContent = `0 / ${messages.length} 条消息`;
+            };
+
+            // ========== 数据流动画 ==========
+            const flowStates = {};
+
+            const flowData = {
+                3: {
+                    steps: [
+                        { label: '用户上传《红楼梦》材料和预测需求', highlight: '3-1' },
+                        { label: '前端接收文件，用 form-data 格式发送给后端', highlight: '3-2', packet: true, from: '3-1', to: '3-2' },
+                        { label: '后端 API 验证参数，调用 OntologyGenerator', highlight: '3-3', packet: true, from: '3-2', to: '3-3' },
+                        { label: 'OntologyGenerator 构建 Prompt，调用 LLM', highlight: '3-4', packet: true, from: '3-3', to: '3-4' },
+                        { label: 'LLM 返回 10 个实体类型和关系定义', highlight: '3-4', packet: true, from: '3-4', to: '3-3' },
+                        { label: '后端返回 ontology 给前端，完成！', highlight: '3-2', packet: true, from: '3-3', to: '3-2' }
+                    ]
+                }
+            };
+
+            window.flowNext = function(num) {
+                console.log('数据流下一步:', num);
+                if (!flowStates[num]) flowStates[num] = { step: 0 };
+                const state = flowStates[num];
+                const data = flowData[num];
+
+                if (!data || state.step >= data.steps.length) return;
+
+                const step = data.steps[state.step];
+
+                document.querySelectorAll(`#flow-actor-${num}-*`).forEach(a => a.classList.remove('active'));
+
+                const highlightEl = document.getElementById(`flow-actor-${num}-${step.highlight}`);
+                if (highlightEl) highlightEl.classList.add('active');
+
+                const labelEl = document.getElementById(`flow-label-${num}`);
+                if (labelEl) labelEl.textContent = step.label;
+                state.step++;
+                const progressEl = document.getElementById(`flow-progress-${num}`);
+                if (progressEl) progressEl.textContent = `步骤 ${state.step} / ${data.steps.length}`;
+            };
+
+            window.flowReset = function(num) {
+                console.log('重置数据流:', num);
+                flowStates[num] = { step: 0 };
+                document.querySelectorAll(`#flow-actor-${num}-*`).forEach(a => a.classList.remove('active'));
+                const labelEl = document.getElementById(`flow-label-${num}`);
+                if (labelEl) labelEl.textContent = '点击「下一步」开始演示';
+                const progressEl = document.getElementById(`flow-progress-${num}`);
+                const data = flowData[num];
+                if (progressEl && data) progressEl.textContent = `步骤 0 / ${data.steps.length}`;
+            };
+
+            // ========== 术语提示 ==========
+            let activeTooltip = null;
+
+            function positionTooltip(term, tip) {
+                const rect = term.getBoundingClientRect();
+                const tipWidth = 300;
+                let left = rect.left + rect.width / 2 - tipWidth / 2;
+                left = Math.max(8, Math.min(left, window.innerWidth - tipWidth - 8));
+
+                document.body.appendChild(tip);
+                const tipHeight = tip.offsetHeight;
+
+                if (rect.top - tipHeight - 8 < 0) {
+                    tip.style.top = (rect.bottom + 8) + 'px';
+                    tip.classList.add('flip');
+                } else {
+                    tip.style.top = (rect.top - tipHeight - 8) + 'px';
+                    tip.classList.remove('flip');
+                }
+                tip.style.left = left + 'px';
+            }
+
+            document.querySelectorAll('.term').forEach(term => {
+                const tip = document.createElement('span');
+                tip.className = 'term-tooltip';
+                tip.textContent = term.dataset.definition;
+
+                term.addEventListener('mouseenter', () => {
+                    if (activeTooltip && activeTooltip !== tip) {
+                        activeTooltip.classList.remove('visible');
+                        activeTooltip.remove();
+                    }
+                    positionTooltip(term, tip);
+                    requestAnimationFrame(() => tip.classList.add('visible'));
+                    activeTooltip = tip;
+                });
+
+                term.addEventListener('mouseleave', () => {
+                    tip.classList.remove('visible');
+                    setTimeout(() => { if (!tip.classList.contains('visible')) tip.remove(); }, 150);
+                    activeTooltip = null;
+                });
+
+                term.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    if (activeTooltip && activeTooltip !== tip) {
+                        activeTooltip.classList.remove('visible');
+                        activeTooltip.remove();
+                    }
+                    if (tip.classList.contains('visible')) {
+                        tip.classList.remove('visible');
+                        tip.remove();
+                        activeTooltip = null;
+                    } else {
+                        positionTooltip(term, tip);
+                        requestAnimationFrame(() => tip.classList.add('visible'));
+                        activeTooltip = tip;
+                    }
+                });
+            });
+
+            document.addEventListener('click', () => {
+                if (activeTooltip) {
+                    activeTooltip.classList.remove('visible');
+                    activeTooltip.remove();
+                    activeTooltip = null;
+                }
+            });
+
+            // 初始化
+            updateProgressBar();
+            updateNavDots();
+
+            console.log('所有功能已初始化！');
+        });
+    </script>
+</body>
+</html>

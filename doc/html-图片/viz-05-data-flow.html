@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>MiroFish · 项目隔离数据流图</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+    background: linear-gradient(135deg, #0a1929 0%, #06101c 50%, #000810 100%);
+    color: #e8ecff;
+    min-height: 100vh;
+    padding: 28px 20px;
+  }
+  .header { text-align: center; margin-bottom: 28px; }
+  .header h1 {
+    font-size: 28px;
+    background: linear-gradient(135deg, #00f2fe 0%, #4facfe 50%, #43e97b 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 6px;
+  }
+  .header p { color: #8a93b8; font-size: 13px; letter-spacing: 1px; }
+
+  .stage {
+    max-width: 1700px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 220px 1fr 380px;
+    gap: 20px;
+    align-items: stretch;
+  }
+
+  .panel {
+    background: linear-gradient(160deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));
+    border: 1px solid rgba(79,172,254,0.2);
+    border-radius: 16px;
+    padding: 20px;
+  }
+
+  .ptitle {
+    font-size: 12px;
+    color: #4facfe;
+    letter-spacing: 2px;
+    margin-bottom: 4px;
+    text-transform: uppercase;
+  }
+  .psubtitle {
+    font-size: 16px;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 16px;
+    padding-bottom: 10px;
+    border-bottom: 1px dashed rgba(79,172,254,0.2);
+  }
+
+  /* LEFT: Users */
+  .user-card {
+    background: linear-gradient(135deg, rgba(79,172,254,0.12), rgba(0,242,254,0.04));
+    border: 1px solid rgba(79,172,254,0.3);
+    border-radius: 12px;
+    padding: 12px;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    transition: all .25s;
+    position: relative;
+  }
+  .user-card:hover {
+    transform: translateX(4px);
+    border-color: rgba(79,172,254,0.7);
+    box-shadow: 0 4px 16px rgba(79,172,254,0.2);
+  }
+  .user-card .avatar {
+    width: 38px; height: 38px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #4facfe, #00f2fe);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+  .user-card .name { font-size: 13px; font-weight: 600; color: #fff; }
+  .user-card .id { font-size: 10px; color: #8a93b8; font-family: 'Consolas', monospace; margin-top: 2px; }
+  .user-card.alice .avatar { background: linear-gradient(135deg, #f093fb, #f5576c); }
+  .user-card.bob .avatar { background: linear-gradient(135deg, #43e97b, #38f9d7); }
+  .user-card.carol .avatar { background: linear-gradient(135deg, #ffd200, #f7971e); }
+
+  /* CENTER: Routing */
+  .router {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+  }
+  .router-box {
+    background: radial-gradient(circle, rgba(255,210,0,0.2), rgba(247,151,30,0.05));
+    border: 2px solid rgba(255,210,0,0.5);
+    border-radius: 18px;
+    padding: 24px;
+    text-align: center;
+    width: 100%;
+    margin-bottom: 20px;
+    position: relative;
+  }
+  .router-box::before {
+    content: '';
+    position: absolute;
+    top: -2px; left: -2px; right: -2px; bottom: -2px;
+    border-radius: 18px;
+    background: linear-gradient(45deg, transparent, rgba(255,210,0,0.4), transparent, rgba(255,210,0,0.4), transparent);
+    z-index: -1;
+    animation: borderRotate 4s linear infinite;
+  }
+  @keyframes borderRotate {
+    0% { background: linear-gradient(0deg, transparent, rgba(255,210,0,0.4), transparent); }
+    100% { background: linear-gradient(360deg, transparent, rgba(255,210,0,0.4), transparent); }
+  }
+  .router-box .ico { font-size: 36px; margin-bottom: 8px; }
+  .router-box h3 { font-size: 16px; color: #ffd200; margin-bottom: 4px; }
+  .router-box .subtitle { font-size: 11px; color: #c8d0e8; line-height: 1.5; }
+  .router-box .formula {
+    margin-top: 10px;
+    padding: 8px;
+    background: rgba(0,0,0,0.4);
+    border-radius: 8px;
+    font-family: 'Consolas', monospace;
+    font-size: 11px;
+    color: #43e97b;
+  }
+
+  .auth-checks {
+    width: 100%;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 12px;
+    padding: 14px;
+  }
+  .auth-checks h4 {
+    font-size: 12px;
+    color: #4facfe;
+    margin-bottom: 10px;
+    letter-spacing: 1px;
+  }
+  .check-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 0;
+    font-size: 11px;
+    color: #c8d0e8;
+    border-bottom: 1px dashed rgba(255,255,255,0.05);
+  }
+  .check-item:last-child { border: none; }
+  .check-item .ok { color: #43e97b; font-weight: 700; }
+
+  /* RIGHT: Storage */
+  .storage-panel { border-color: rgba(67,233,123,0.3); }
+  .storage-panel .ptitle { color: #43e97b; }
+
+  .project-folder {
+    background: linear-gradient(135deg, rgba(67,233,123,0.08), rgba(56,249,215,0.02));
+    border: 1px solid rgba(67,233,123,0.25);
+    border-radius: 12px;
+    margin-bottom: 14px;
+    overflow: hidden;
+  }
+  .project-folder.alice { border-color: rgba(245,87,108,0.3); background: linear-gradient(135deg, rgba(245,87,108,0.08), rgba(240,147,251,0.02)); }
+  .project-folder.bob { border-color: rgba(67,233,123,0.3); }
+  .project-folder.carol { border-color: rgba(255,210,0,0.3); background: linear-gradient(135deg, rgba(255,210,0,0.08), rgba(247,151,30,0.02)); }
+
+  .folder-head {
+    padding: 10px 14px;
+    background: rgba(0,0,0,0.3);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-bottom: 1px dashed rgba(255,255,255,0.08);
+  }
+  .folder-head .fi {
+    font-size: 18px;
+  }
+  .folder-head .path {
+    font-family: 'Consolas', monospace;
+    font-size: 11px;
+    color: #43e97b;
+    flex: 1;
+  }
+  .project-folder.alice .folder-head .path { color: #f5576c; }
+  .project-folder.carol .folder-head .path { color: #ffd200; }
+  .folder-head .lock {
+    font-size: 11px;
+    padding: 2px 8px;
+    background: rgba(67,233,123,0.15);
+    color: #43e97b;
+    border-radius: 8px;
+  }
+  .project-folder.alice .folder-head .lock { background: rgba(245,87,108,0.15); color: #f5576c; }
+  .project-folder.carol .folder-head .lock { background: rgba(255,210,0,0.15); color: #ffd200; }
+
+  .folder-content {
+    padding: 10px 14px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+  }
+  .file-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    color: #c8d0e8;
+    padding: 4px 6px;
+    background: rgba(255,255,255,0.03);
+    border-radius: 6px;
+  }
+  .file-item .fi { font-size: 13px; }
+
+  /* Connection arrows (SVG overlay) */
+  .flow-svg {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+    z-index: 5;
+  }
+
+  /* Bottom: Operations Legend */
+  .ops-row {
+    max-width: 1700px;
+    margin: 24px auto 0;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+  }
+  .op-card {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 12px;
+    padding: 14px;
+  }
+  .op-card .op-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+  }
+  .op-card .op-head .ico {
+    width: 32px; height: 32px;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+  }
+  .op-card.read .op-head .ico { background: rgba(79,172,254,0.2); color: #4facfe; }
+  .op-card.write .op-head .ico { background: rgba(67,233,123,0.2); color: #43e97b; }
+  .op-card.update .op-head .ico { background: rgba(255,210,0,0.2); color: #ffd200; }
+  .op-card.delete .op-head .ico { background: rgba(245,87,108,0.2); color: #f5576c; }
+  .op-card .op-name { font-weight: 700; font-size: 13px; }
+  .op-card .op-desc { font-size: 11px; color: #a8b1d4; line-height: 1.5; }
+
+  .legend {
+    max-width: 1700px;
+    margin: 20px auto 0;
+    background: rgba(0,0,0,0.3);
+    border-radius: 12px;
+    padding: 14px 20px;
+    text-align: center;
+    font-size: 12px;
+    color: #c8d0e8;
+  }
+  .legend strong { color: #ffd200; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>MiroFish · 项目级隔离数据流图</h1>
+  <p>Project-Level Isolated Data Flow（FR-06 · 历史项目管理）</p>
+</div>
+
+<div class="stage">
+
+  <!-- LEFT: Users -->
+  <div class="panel">
+    <div class="ptitle">▎ ACTORS</div>
+    <div class="psubtitle">用户请求源</div>
+
+    <div class="user-card alice">
+      <div class="avatar">👩</div>
+      <div>
+        <div class="name">Alice</div>
+        <div class="id">user_id: u_001</div>
+      </div>
+    </div>
+    <div class="user-card bob">
+      <div class="avatar">👨</div>
+      <div>
+        <div class="name">Bob</div>
+        <div class="id">user_id: u_002</div>
+      </div>
+    </div>
+    <div class="user-card carol">
+      <div class="avatar">🧑</div>
+      <div>
+        <div class="name">Carol</div>
+        <div class="id">user_id: u_003</div>
+      </div>
+    </div>
+
+    <div style="margin-top: 16px; padding: 12px; background: rgba(0,0,0,0.3); border-radius: 10px; font-size: 11px; color: #a8b1d4; line-height: 1.6;">
+      💡 每位用户携带 <strong style="color:#4facfe;">user_id</strong> 与 <strong style="color:#4facfe;">project_id</strong> 发起 CRUD 请求
+    </div>
+  </div>
+
+  <!-- CENTER: Routing -->
+  <div class="router">
+    <div class="router-box">
+      <div class="ico">🔀</div>
+      <h3>项目路由网关</h3>
+      <div class="subtitle">Project Isolation Router<br>校验身份 + 解析项目 + 路由存储</div>
+      <div class="formula">
+        path = ./data/{user_id}/{project_id}/
+      </div>
+    </div>
+
+    <div class="auth-checks">
+      <h4>▎ 隔离校验链路（NFR-03 安全）</h4>
+      <div class="check-item">
+        <span class="ok">✓</span>
+        <span>身份鉴权：JWT / Session Token 校验</span>
+      </div>
+      <div class="check-item">
+        <span class="ok">✓</span>
+        <span>项目归属：验证 project_id ∈ user.projects[]</span>
+      </div>
+      <div class="check-item">
+        <span class="ok">✓</span>
+        <span>路径净化：拒绝 ../ 越权访问</span>
+      </div>
+      <div class="check-item">
+        <span class="ok">✓</span>
+        <span>密钥隔离：API Key 仅从 .env 读取</span>
+      </div>
+      <div class="check-item">
+        <span class="ok">✓</span>
+        <span>删除二次确认：防止误删（FR-06）</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT: Storage Folders -->
+  <div class="panel storage-panel">
+    <div class="ptitle">▎ LOCAL STORAGE</div>
+    <div class="psubtitle">项目级隔离本地存储</div>
+
+    <div class="project-folder alice">
+      <div class="folder-head">
+        <span class="fi">📁</span>
+        <span class="path">/data/u_001/proj_pandemic_2026/</span>
+        <span class="lock">🔒 隔离</span>
+      </div>
+      <div class="folder-content">
+        <div class="file-item"><span class="fi">📄</span>seeds.pdf</div>
+        <div class="file-item"><span class="fi">🕸️</span>graph.json</div>
+        <div class="file-item"><span class="fi">👥</span>agents.json</div>
+        <div class="file-item"><span class="fi">📊</span>report.md</div>
+        <div class="file-item"><span class="fi">💬</span>chat_log.db</div>
+        <div class="file-item"><span class="fi">📈</span>simulation.log</div>
+      </div>
+    </div>
+
+    <div class="project-folder bob">
+      <div class="folder-head">
+        <span class="fi">📁</span>
+        <span class="path">/data/u_002/proj_election_sim/</span>
+        <span class="lock">🔒 隔离</span>
+      </div>
+      <div class="folder-content">
+        <div class="file-item"><span class="fi">📄</span>seeds.txt</div>
+        <div class="file-item"><span class="fi">🕸️</span>graph.json</div>
+        <div class="file-item"><span class="fi">👥</span>agents.json</div>
+        <div class="file-item"><span class="fi">📊</span>report.md</div>
+      </div>
+    </div>
+
+    <div class="project-folder carol">
+      <div class="folder-head">
+        <span class="fi">📁</span>
+        <span class="path">/data/u_003/proj_novel_ending/</span>
+        <span class="lock">🔒 隔离</span>
+      </div>
+      <div class="folder-content">
+        <div class="file-item"><span class="fi">📄</span>seeds.md</div>
+        <div class="file-item"><span class="fi">🕸️</span>graph.json</div>
+        <div class="file-item"><span class="fi">👥</span>agents.json</div>
+        <div class="file-item"><span class="fi">💬</span>chat_log.db</div>
+      </div>
+    </div>
+
+    <div style="margin-top: 14px; padding: 10px; background: rgba(245,87,108,0.08); border-left: 3px solid #f5576c; border-radius: 6px; font-size: 11px; color: #c8d0e8;">
+      ⛔ Alice <strong style="color:#f5576c;">无法</strong>读写 Bob 或 Carol 的项目目录 → 强隔离保证（NFR-03）
+    </div>
+  </div>
+
+</div>
+
+<!-- Operations Row -->
+<div class="ops-row">
+  <div class="op-card read">
+    <div class="op-head">
+      <div class="ico">📖</div>
+      <div>
+        <div class="op-name">查看（Read）</div>
+        <div class="op-desc" style="font-size:10px; color:#4facfe;">GET /api/projects/:id</div>
+      </div>
+    </div>
+    <div class="op-desc">读取该项目的种子、图谱、人设、报告与对话历史，渲染项目详情视图</div>
+  </div>
+  <div class="op-card write">
+    <div class="op-head">
+      <div class="ico">📝</div>
+      <div>
+        <div class="op-name">写入（Write）</div>
+        <div class="op-desc" style="font-size:10px; color:#43e97b;">POST /api/projects/:id/data</div>
+      </div>
+    </div>
+    <div class="op-desc">仿真过程持续追加日志、更新人设状态、保存生成的报告章节</div>
+  </div>
+  <div class="op-card update">
+    <div class="op-head">
+      <div class="ico">♻️</div>
+      <div>
+        <div class="op-name">复用（Reuse）</div>
+        <div class="op-desc" style="font-size:10px; color:#ffd200;">POST /api/projects/:id/clone</div>
+      </div>
+    </div>
+    <div class="op-desc">复用历史图谱与人设作为新项目起点，避免重复 5 分钟图谱构建</div>
+  </div>
+  <div class="op-card delete">
+    <div class="op-head">
+      <div class="ico">🗑️</div>
+      <div>
+        <div class="op-name">删除（Delete）</div>
+        <div class="op-desc" style="font-size:10px; color:#f5576c;">DELETE /api/projects/:id</div>
+      </div>
+    </div>
+    <div class="op-desc">二次确认后整体清理 /data/{user_id}/{project_id}/ 目录</div>
+  </div>
+</div>
+
+<div class="legend">
+  📌 <strong>核心规则：</strong>所有 CRUD 路径强制带上 <code style="color:#43e97b;">{user_id}/{project_id}</code> 二级前缀，
+  系统层面保证 <strong>跨用户 0 数据泄露</strong> 与 <strong>跨项目 0 数据交叉污染</strong>
+</div>
+
+</body>
+</html>

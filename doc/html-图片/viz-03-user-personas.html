@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>MiroFish · 用户画像与场景图</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+    background: linear-gradient(135deg, #2c1810 0%, #1a1625 50%, #0f1729 100%);
+    color: #fff;
+    min-height: 100vh;
+    padding: 32px 24px;
+  }
+  .header {
+    text-align: center;
+    margin-bottom: 32px;
+  }
+  .header h1 {
+    font-size: 28px;
+    background: linear-gradient(135deg, #ffd89b 0%, #19547b 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 6px;
+  }
+  .header p { color: #a8b1d4; font-size: 13px; }
+
+  .compare {
+    max-width: 1500px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1fr 80px 1fr;
+    gap: 0;
+    align-items: stretch;
+  }
+
+  .persona {
+    background: linear-gradient(160deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01));
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 24px;
+    padding: 32px 28px;
+    backdrop-filter: blur(10px);
+    position: relative;
+    overflow: hidden;
+  }
+  .persona.user::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; height: 4px;
+    background: linear-gradient(90deg, #4facfe, #00f2fe);
+  }
+  .persona.admin::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; height: 4px;
+    background: linear-gradient(90deg, #f5576c, #f093fb);
+  }
+
+  .avatar-row {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    margin-bottom: 24px;
+    padding-bottom: 20px;
+    border-bottom: 1px dashed rgba(255,255,255,0.15);
+  }
+  .avatar {
+    width: 90px; height: 90px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 48px;
+    flex-shrink: 0;
+    position: relative;
+  }
+  .persona.user .avatar {
+    background: radial-gradient(circle, #4facfe 0%, #1976d2 100%);
+    box-shadow: 0 0 30px rgba(79,172,254,0.5);
+  }
+  .persona.admin .avatar {
+    background: radial-gradient(circle, #f5576c 0%, #b71c1c 100%);
+    box-shadow: 0 0 30px rgba(245,87,108,0.5);
+  }
+  .role-info h2 {
+    font-size: 24px;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+  .role-info .role-tag {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 10px;
+    font-size: 11px;
+    margin-right: 6px;
+  }
+  .persona.user .role-tag { background: rgba(79,172,254,0.2); color: #4facfe; }
+  .persona.admin .role-tag { background: rgba(245,87,108,0.2); color: #f5576c; }
+
+  .section { margin-bottom: 22px; }
+  .section h3 {
+    font-size: 13px;
+    color: #ffd89b;
+    letter-spacing: 2px;
+    margin-bottom: 12px;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .section h3::before {
+    content: '';
+    width: 4px; height: 14px;
+    background: #ffd89b;
+    border-radius: 2px;
+  }
+
+  .duty-list {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .duty {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 10px;
+    padding: 10px 12px;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all .25s;
+  }
+  .duty:hover {
+    background: rgba(255,255,255,0.08);
+    transform: translateY(-2px);
+  }
+  .duty .di {
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+  .duty span {
+    color: #c8d0e8;
+    font-size: 12px;
+    line-height: 1.4;
+  }
+
+  .scene-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 10px;
+  }
+  .scene {
+    text-align: center;
+    padding: 14px 10px;
+    background: linear-gradient(160deg, rgba(255,216,155,0.1), rgba(255,216,155,0.02));
+    border: 1px solid rgba(255,216,155,0.2);
+    border-radius: 12px;
+    transition: all .25s;
+  }
+  .scene:hover {
+    transform: translateY(-3px);
+    border-color: rgba(255,216,155,0.5);
+  }
+  .scene .ico {
+    font-size: 28px;
+    margin-bottom: 6px;
+  }
+  .scene .name {
+    font-size: 12px;
+    font-weight: 600;
+    color: #ffd89b;
+    margin-bottom: 3px;
+  }
+  .scene .desc {
+    font-size: 10px;
+    color: #a8b1d4;
+    line-height: 1.4;
+  }
+
+  .uc-bar {
+    margin-top: 18px;
+    padding: 12px;
+    background: rgba(0,0,0,0.3);
+    border-radius: 10px;
+    font-size: 11px;
+    color: #a8b1d4;
+  }
+  .uc-bar strong { color: #00f2fe; }
+  .persona.admin .uc-bar strong { color: #f093fb; }
+
+  .vs-divider {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .vs-circle {
+    width: 60px; height: 60px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #4facfe 0%, #f5576c 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    font-weight: 800;
+    color: #fff;
+    box-shadow: 0 0 30px rgba(255,255,255,0.2);
+    animation: spin 6s linear infinite;
+  }
+  @keyframes spin {
+    0% { transform: rotate(0); }
+    100% { transform: rotate(360deg); }
+  }
+  .vs-line {
+    width: 2px;
+    flex: 1;
+    background: linear-gradient(180deg, transparent, rgba(255,255,255,0.2), transparent);
+  }
+
+  .external-deps {
+    max-width: 1500px;
+    margin: 32px auto 0;
+    background: rgba(0,0,0,0.3);
+    border-radius: 16px;
+    padding: 20px 24px;
+    border: 1px dashed rgba(255,255,255,0.1);
+  }
+  .external-deps h3 {
+    font-size: 13px;
+    color: #ffd89b;
+    margin-bottom: 12px;
+    letter-spacing: 2px;
+  }
+  .deps-row {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .dep-card {
+    flex: 1;
+    min-width: 240px;
+    padding: 14px;
+    background: rgba(255,255,255,0.04);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .dep-card .di {
+    font-size: 28px;
+    width: 50px; height: 50px;
+    background: rgba(255,216,155,0.1);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .dep-card .info .name { font-weight: 700; font-size: 14px; margin-bottom: 2px; }
+  .dep-card .info .desc { font-size: 11px; color: #a8b1d4; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>用户画像 · 角色与典型场景</h1>
+  <p>System Personas &amp; Use-Case Scenarios</p>
+</div>
+
+<div class="compare">
+
+  <!-- USER -->
+  <div class="persona user">
+    <div class="avatar-row">
+      <div class="avatar">👤</div>
+      <div class="role-info">
+        <h2>普通用户</h2>
+        <span class="role-tag">END USER</span>
+        <span class="role-tag">无技术门槛</span>
+      </div>
+    </div>
+
+    <div class="section">
+      <h3>核心职责</h3>
+      <div class="duty-list">
+        <div class="duty"><span class="di">📤</span><span>上传种子材料<br><small style="color:#666">PDF / TXT / MD</small></span></div>
+        <div class="duty"><span class="di">⚙️</span><span>配置仿真参数<br><small style="color:#666">Agent 数量 / 轮数</small></span></div>
+        <div class="duty"><span class="di">📊</span><span>查看预测报告<br><small style="color:#666">趋势 · 关键事件</small></span></div>
+        <div class="duty"><span class="di">💬</span><span>深度交互对话<br><small style="color:#666">与 Agent 多轮交流</small></span></div>
+        <div class="duty"><span class="di">👁️</span><span>上帝视角注入<br><small style="color:#666">动态变量调整</small></span></div>
+        <div class="duty"><span class="di">🗂️</span><span>历史项目复用<br><small style="color:#666">项目档案管理</small></span></div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h3>典型应用场景</h3>
+      <div class="scene-grid">
+        <div class="scene">
+          <div class="ico">📰</div>
+          <div class="name">舆情研究员</div>
+          <div class="desc">突发事件传播预演</div>
+        </div>
+        <div class="scene">
+          <div class="ico">🚀</div>
+          <div class="name">产品经理</div>
+          <div class="desc">新功能用户反应推演</div>
+        </div>
+        <div class="scene">
+          <div class="ico">✍️</div>
+          <div class="name">内容创作者</div>
+          <div class="desc">小说结局推演 · 脑洞</div>
+        </div>
+        <div class="scene">
+          <div class="ico">🏛️</div>
+          <div class="name">政策分析员</div>
+          <div class="desc">法规社会影响预测</div>
+        </div>
+        <div class="scene">
+          <div class="ico">📈</div>
+          <div class="name">市场调研员</div>
+          <div class="desc">消费群体趋势模拟</div>
+        </div>
+        <div class="scene">
+          <div class="ico">🎓</div>
+          <div class="name">学术研究者</div>
+          <div class="desc">社会演化机制实验</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="uc-bar">
+      🎯 <strong>关联用例：</strong>UC1 上传种子 · UC2 构建图谱 · UC3 生成人设 · UC4 启动仿真 · UC5 注入变量 · UC6 生成报告 · UC7 深度对话
+    </div>
+  </div>
+
+  <!-- VS Divider -->
+  <div class="vs-divider">
+    <div class="vs-line"></div>
+    <div class="vs-circle">VS</div>
+    <div class="vs-line"></div>
+  </div>
+
+  <!-- ADMIN -->
+  <div class="persona admin">
+    <div class="avatar-row">
+      <div class="avatar">🛡️</div>
+      <div class="role-info">
+        <h2>管理员</h2>
+        <span class="role-tag">ADMIN</span>
+        <span class="role-tag">系统维护</span>
+      </div>
+    </div>
+
+    <div class="section">
+      <h3>核心职责</h3>
+      <div class="duty-list">
+        <div class="duty"><span class="di">🗃️</span><span>历史档案管理<br><small style="color:#666">项目级数据维护</small></span></div>
+        <div class="duty"><span class="di">🧹</span><span>项目清理归档<br><small style="color:#666">过期数据清理</small></span></div>
+        <div class="duty"><span class="di">🔍</span><span>系统日志审查<br><small style="color:#666">关键事件追踪</small></span></div>
+        <div class="duty"><span class="di">🔑</span><span>API 密钥配置<br><small style="color:#666">.env 安全管理</small></span></div>
+        <div class="duty"><span class="di">📡</span><span>服务监控<br><small style="color:#666">性能与可用性</small></span></div>
+        <div class="duty"><span class="di">🔧</span><span>故障排查<br><small style="color:#666">线上问题定位</small></span></div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h3>典型应用场景</h3>
+      <div class="scene-grid">
+        <div class="scene">
+          <div class="ico">⚙️</div>
+          <div class="name">运维工程师</div>
+          <div class="desc">服务部署与监控</div>
+        </div>
+        <div class="scene">
+          <div class="ico">🛠️</div>
+          <div class="name">系统管理员</div>
+          <div class="desc">用户权限与配置</div>
+        </div>
+        <div class="scene">
+          <div class="ico">📋</div>
+          <div class="name">数据管理员</div>
+          <div class="desc">项目档案治理</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="uc-bar">
+      🎯 <strong>关联用例：</strong>UC8 历史项目管理（查看 · 复用 · 删除二次确认）
+    </div>
+  </div>
+
+</div>
+
+<!-- External Dependencies -->
+<div class="external-deps">
+  <h3>▎ 外部依赖服务（共同协作）</h3>
+  <div class="deps-row">
+    <div class="dep-card">
+      <div class="di">🤖</div>
+      <div class="info">
+        <div class="name">LLM API</div>
+        <div class="desc">自然语言推理 · 兼容 OpenAI SDK 规范<br>支持 Qwen / GPT / Claude / DeepSeek</div>
+      </div>
+    </div>
+    <div class="dep-card">
+      <div class="di">🧠</div>
+      <div class="info">
+        <div class="name">Zep Cloud</div>
+        <div class="desc">智能体长期记忆 &amp; 时序事件存储<br>支撑 Agent 行为一致性与演化</div>
+      </div>
+    </div>
+    <div class="dep-card">
+      <div class="di">🔗</div>
+      <div class="info">
+        <div class="name">GraphRAG</div>
+        <div class="desc">知识图谱实体抽取与检索增强<br>种子材料 → 结构化图谱</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

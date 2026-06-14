@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MiroFish - 软件工程项目展示</title>
+    <!-- 引入特殊字体，增加设计感 -->
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=ZCOOL+QingKe+HuangYou&family=Noto+Sans+SC:wght@300;400;700;900&display=swap');
+
+        :root {
+            /* 深海配色系统 */
+            --bg-deep: #020813;
+            --bg-mid: #0a192f;
+            --bg-light: #112240;
+            --accent-cyan: #00f2fe;
+            --accent-blue: #4facfe;
+            --text-main: #e6f1ff;
+            --text-muted: #8892b0;
+            
+            /* 毛玻璃特效 */
+            --glass-bg: rgba(10, 25, 47, 0.4);
+            --glass-border: rgba(0, 242, 254, 0.15);
+            --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.6);
+        }
+
+        /* 全局视口自适应限制 */
+        * { box-sizing: border-box; }
+        body, html {
+            margin: 0; padding: 0;
+            width: 100vw; height: 100vh;
+            overflow: hidden; /* 绝对禁止滚动条 */
+            background-color: var(--bg-deep);
+            color: var(--text-main);
+            font-family: 'Noto Sans SC', sans-serif;
+            /* 严格遵守最小 25px 的要求 */
+            font-size: clamp(25px, 2.5vw, 32px);
+        }
+
+        /* --- 背景流体动画 (Abyssal Fluid) --- */
+        .ambient-background {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -1;
+            background: radial-gradient(circle at 50% 50%, var(--bg-mid) 0%, var(--bg-deep) 100%);
+            overflow: hidden;
+        }
+        .fluid-orb {
+            position: absolute; border-radius: 50%;
+            filter: blur(80px); opacity: 0.4;
+            animation: float 20s infinite ease-in-out alternate;
+        }
+        .orb-1 { width: 60vw; height: 60vh; background: #004e92; top: -10vh; left: -10vw; animation-delay: 0s; }
+        .orb-2 { width: 50vw; height: 50vh; background: #00f2fe; bottom: -20vh; right: -10vw; animation-delay: -5s; opacity: 0.2; }
+        .orb-3 { width: 40vw; height: 40vh; background: #0f2027; top: 30vh; left: 30vw; animation-delay: -10s; opacity: 0.6; }
+
+        @keyframes float {
+            0% { transform: translate(0, 0) scale(1); }
+            50% { transform: translate(5vw, 8vh) scale(1.1); }
+            100% { transform: translate(-5vw, -5vh) scale(0.9); }
+        }
+
+        /* --- 幻灯片布局与切换框架 --- */
+        .presentation {
+            position: relative; width: 100%; height: 100%;
+        }
+        .slide {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            padding: clamp(30px, 5vw, 60px);
+            opacity: 0; pointer-events: none;
+            transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1), transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+            transform: scale(0.95) translateY(20px);
+        }
+        .slide.active {
+            opacity: 1; pointer-events: auto; transform: scale(1) translateY(0);
+        }
+
+        /* --- UI 组件：毛玻璃卡片 --- */
+        .glass-panel {
+            background: var(--glass-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: clamp(30px, 4vw, 50px);
+            box-shadow: var(--glass-shadow);
+            max-width: 90vw; width: 100%;
+            display: flex; flex-direction: column; gap: 20px;
+        }
+
+        /* --- 排版 --- */
+        h1, h2, h3 {
+            font-family: 'ZCOOL QingKe HuangYou', cursive; /* 科技感标题字体 */
+            margin: 0; font-weight: normal; letter-spacing: 2px;
+        }
+        h1 {
+            font-size: clamp(60px, 6vw, 100px);
+            background: linear-gradient(90deg, var(--text-main), var(--accent-cyan));
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            text-align: center;
+        }
+        h2 {
+            font-size: clamp(40px, 4.5vw, 65px);
+            color: var(--accent-cyan);
+            border-bottom: 2px solid var(--glass-border);
+            padding-bottom: 10px; margin-bottom: 20px;
+        }
+        .subtitle {
+            font-size: clamp(30px, 3vw, 45px);
+            color: var(--accent-blue); text-align: center;
+            font-weight: 300; margin-top: -10px;
+        }
+        ul {
+            margin: 0; padding-left: 1.5em; line-height: 1.8;
+            font-size: clamp(25px, 2.5vw, 35px);
+        }
+        li::marker { color: var(--accent-cyan); }
+        .highlight { color: var(--accent-cyan); font-weight: 700; }
+
+        /* --- 进场动画控制 (.reveal) --- */
+        .reveal { opacity: 0; transform: translateY(30px); transition: all 0.6s ease; }
+        .active .reveal { opacity: 1; transform: translateY(0); }
+        .active .delay-1 { transition-delay: 0.2s; }
+        .active .delay-2 { transition-delay: 0.4s; }
+        .active .delay-3 { transition-delay: 0.6s; }
+        .active .delay-4 { transition-delay: 0.8s; }
+
+        /* ==========================================================
+           定制纯 CSS 机制演示动画 (Mechanism Animations) 
+           ========================================================== */
+        
+        /* 布局网格容器 */
+        .split-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: clamp(20px, 4vw, 40px);
+            width: 100%; height: 100%; align-items: center;
+        }
+
+        /* 1. 数字鱼缸 (Slide 3) */
+        .fish-tank {
+            position: relative; width: 100%; height: 40vh;
+            border: 2px solid var(--glass-border); border-radius: 20px;
+            background: rgba(0, 242, 254, 0.05); overflow: hidden;
+            box-shadow: inset 0 0 30px rgba(0, 242, 254, 0.1);
+        }
+        .agent-dot {
+            position: absolute; width: clamp(20px, 2vw, 30px); height: clamp(20px, 2vw, 30px);
+            background: var(--accent-cyan); border-radius: 50%;
+            box-shadow: 0 0 15px var(--accent-cyan);
+        }
+        .a1 { animation: swim1 8s infinite alternate ease-in-out; }
+        .a2 { background: var(--accent-blue); animation: swim2 10s infinite alternate ease-in-out; }
+        .a3 { background: #fff; animation: swim3 7s infinite alternate ease-in-out; }
+        @keyframes swim1 { 0% { top: 10%; left: 10%; } 100% { top: 80%; left: 80%; } }
+        @keyframes swim2 { 0% { top: 80%; left: 20%; } 100% { top: 20%; left: 70%; } }
+        @keyframes swim3 { 0% { top: 50%; left: 50%; } 100% { top: 10%; left: 40%; } }
+
+        /* 2. 记忆与知识图谱连线 (Slide 4) */
+        .graph-viz {
+            position: relative; width: 100%; height: 40vh;
+            display: flex; justify-content: center; align-items: center;
+        }
+        .node {
+            position: absolute; padding: 10px 20px; border-radius: 8px;
+            background: var(--bg-light); border: 1px solid var(--accent-cyan);
+            font-size: clamp(25px, 2vw, 28px); z-index: 2;
+        }
+        .n-center { top: 40%; left: 40%; }
+        .n-1 { top: 10%; left: 10%; }
+        .n-2 { top: 70%; left: 20%; }
+        .n-3 { top: 20%; left: 80%; }
+        .edge-line {
+            position: absolute; background: var(--accent-blue);
+            height: 2px; transform-origin: left center; z-index: 1;
+            animation: drawLine 3s infinite;
+        }
+        .e-1 { top: 15%; left: 15%; width: 35%; transform: rotate(35deg); animation-delay: 0s; }
+        .e-2 { top: 45%; left: 45%; width: 40%; transform: rotate(-20deg); animation-delay: 1s; }
+        .e-3 { top: 75%; left: 25%; width: 30%; transform: rotate(-50deg); animation-delay: 2s; }
+        @keyframes drawLine {
+            0% { transform: scaleX(0); opacity: 0; }
+            30% { transform: scaleX(1); opacity: 1; }
+            80% { transform: scaleX(1); opacity: 1; }
+            100% { transform: scaleX(1); opacity: 0; }
+        }
+
+        /* 3. 社交信息流滚动 (Slide 5) */
+        .social-feed {
+            width: 100%; height: 45vh; overflow: hidden; position: relative;
+            background: rgba(0,0,0,0.3); border-radius: 16px; padding: 20px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .mock-post {
+            background: var(--glass-bg); padding: 15px 25px; border-radius: 12px; margin-bottom: 15px;
+            border-left: 4px solid var(--accent-cyan);
+            animation: scrollUp 6s linear infinite; position: absolute; width: calc(100% - 40px);
+        }
+        .p1 { bottom: -100px; animation-delay: 0s; }
+        .p2 { bottom: -100px; animation-delay: 2s; }
+        .p3 { bottom: -100px; animation-delay: 4s; }
+        @keyframes scrollUp {
+            0% { transform: translateY(100px); opacity: 0; }
+            10% { opacity: 1; }
+            80% { opacity: 1; }
+            100% { transform: translateY(-40vh); opacity: 0; }
+        }
+
+        /* 4. 架构数据流 (Slide 7) */
+        .arch-flow {
+            display: flex; justify-content: space-between; align-items: center; width: 100%; height: 30vh;
+        }
+        .arch-box {
+            background: var(--bg-light); padding: 20px 40px; border-radius: 12px;
+            border: 1px solid var(--accent-cyan); text-align: center; font-weight: bold;
+            box-shadow: 0 0 20px rgba(0, 242, 254, 0.2); z-index: 2;
+        }
+        .flow-path {
+            flex-grow: 1; height: 4px; background: rgba(255,255,255,0.1); position: relative; margin: 0 20px; overflow: hidden;
+        }
+        .data-packet {
+            position: absolute; width: 30px; height: 4px; background: var(--accent-cyan); top: 0; left: 0;
+            box-shadow: 0 0 10px var(--accent-cyan);
+            animation: moveData 2s linear infinite;
+        }
+        @keyframes moveData { 0% { left: -30px; } 100% { left: 100%; } }
+
+        /* 图片占位限制 */
+        .img-showcase {
+            width: 100%;
+            height: clamp(200px, 45vh, 400px);
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px; display: flex; justify-content: center; align-items: center;
+            color: var(--accent-cyan); font-weight: bold; font-size: 30px;
+        }
+
+        /* 底部进度指示器 */
+        .progress-bar {
+            position: fixed; bottom: 0; left: 0; height: 5px; background: var(--accent-cyan);
+            width: 0%; transition: width 0.3s ease; z-index: 100;
+        }
+        .hint {
+            position: fixed; bottom: 20px; right: 30px; font-size: clamp(16px, 1.5vw, 20px);
+            color: var(--text-muted); opacity: 0.5; z-index: 100; font-family: sans-serif;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 氛围背景 -->
+    <div class="ambient-background">
+        <div class="fluid-orb orb-1"></div>
+        <div class="fluid-orb orb-2"></div>
+        <div class="fluid-orb orb-3"></div>
+    </div>
+
+    <div class="presentation" id="presentation">
+        
+        <!-- Slide 1: 封面 -->
+        <section class="slide active">
+            <div class="glass-panel reveal" style="text-align: center; padding: clamp(50px, 8vw, 100px);">
+                <h1>MiroFish</h1>
+                <div class="subtitle reveal delay-1">搭建你的赛博“楚门的世界”</div>
+                <p class="reveal delay-2" style="color: var(--text-muted); margin-top: 30px;">基于 LLM 的多智能体模拟推演平台</p>
+                <p class="reveal delay-3" style="font-size: 25px; margin-top: 50px;">软件工程课程汇报展示</p>
+            </div>
+        </section>
+
+        <!-- Slide 2: 痛点引入 -->
+        <section class="slide">
+            <div class="glass-panel" style="height: 80vh; justify-content: center;">
+                <h2 class="reveal">为什么我们需要它？</h2>
+                <div class="split-layout">
+                    <div class="reveal delay-1">
+                        <p>现在的 AI 已经很聪明，但如果把 <span class="highlight">100 个 AI</span> 放在同一个环境里，它们会发生什么？</p>
+                        <ul>
+                            <li class="reveal delay-2">它们会形成社会阶层吗？</li>
+                            <li class="reveal delay-3">它们会产生舆论风暴吗？</li>
+                            <li class="reveal delay-4" style="color: #ff4757;">痛点：目前缺乏一个<span class="highlight">好用、可视化</span>的沙盒工具来观察群体智能。</li>
+                        </ul>
+                    </div>
+                    <div class="reveal delay-2" style="text-align: center; font-size: clamp(80px, 8vw, 120px); font-weight: 900; opacity: 0.3;">
+                        ???
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Slide 3: 核心概念 -->
+        <section class="slide">
+            <div class="glass-panel">
+                <h2 class="reveal">MiroFish 是什么？</h2>
+                <p class="reveal delay-1">它就像一个<span class="highlight">高度自由的“数字鱼缸”</span>。</p>
+                <div class="split-layout" style="margin-top: 20px;">
+                    <ul class="reveal delay-2">
+                        <li>你负责设定规则和角色（放入鱼儿）。</li>
+                        <li>平台提供环境（注入水流）。</li>
+                        <li>剩下的，就是观察智能体们如何自由碰撞、社交和演化。</li>
+                    </ul>
+                    <div class="fish-tank reveal delay-3">
+                        <div class="agent-dot a1"></div>
+                        <div class="agent-dot a2"></div>
+                        <div class="agent-dot a3"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Slide 4: 硬核功能 1 - 记忆认知 -->
+        <section class="slide">
+            <div class="glass-panel">
+                <h2 class="reveal">硬核功能：不仅会说话，还拥有“记忆”</h2>
+                <div class="split-layout">
+                    <div class="reveal delay-1">
+                        <p>传统 AI 是“七秒记忆”，而 MiroFish 搭载了强大的记忆引擎。</p>
+                        <ul>
+                            <li>深度集成 <span class="highlight">Zep 记忆架构</span>。</li>
+                            <li>动态生成并更新角色之间的<span class="highlight">知识图谱</span>。</li>
+                            <li>AI 能记住昨天谁骂了它，今天谁帮了它。</li>
+                        </ul>
+                    </div>
+                    <div class="graph-viz reveal delay-2">
+                        <div class="node n-center highlight">核心智能体 A</div>
+                        <div class="node n-1">事件：争吵</div>
+                        <div class="node n-2">人物 B：盟友</div>
+                        <div class="node n-3">物品：线索</div>
+                        <div class="edge-line e-1"></div>
+                        <div class="edge-line e-2"></div>
+                        <div class="edge-line e-3"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Slide 5: 硬核功能 2 - 社交模拟 -->
+        <section class="slide">
+            <div class="glass-panel">
+                <h2 class="reveal">硬核舞台：真实的社交生态模拟</h2>
+                <div class="split-layout">
+                    <div class="reveal delay-1">
+                        <p>我们不仅模拟大脑，还模拟它们生活的“世界”。</p>
+                        <ul>
+                            <li>内置 <span class="highlight">Twitter / Reddit</span> 拟真论坛环境。</li>
+                            <li>支持智能体自主：<span class="highlight">发帖、点赞、评论、转发</span>。</li>
+                            <li>实时追踪舆情热度传播路径。</li>
+                        </ul>
+                    </div>
+                    <div class="social-feed reveal delay-2">
+                        <div class="mock-post p1">
+                            <span class="highlight">Agent 01:</span> 震惊！武大樱花今天开了！🌸 (点赞 102)
+                        </div>
+                        <div class="mock-post p2">
+                            <span class="highlight">Agent 02 回复:</span> 太棒了，求组队去赏樱！
+                        </div>
+                        <div class="mock-post p3">
+                            <span class="highlight">Agent 03:</span> 听说今天食堂有新菜？ (评论 45)
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Slide 6: 趣味案例展示 -->
+        <section class="slide">
+            <div class="glass-panel" style="height: 85vh;">
+                <h2 class="reveal">万物皆可模拟：特色推演案例</h2>
+                <div class="split-layout">
+                    <div class="reveal delay-1" style="display: flex; flex-direction: column; gap: 15px;">
+                        <h3 class="highlight">案例 A：《红楼梦》大观园</h3>
+                        <p style="font-size: clamp(25px, 2vw, 28px); margin:0;">注入原著角色性格，推演如果没有抄家，大观园的日常社交会如何演变？</p>
+                        <div class="img-showcase">[ 演示素材：红楼梦推演图谱 ]</div>
+                    </div>
+                    <div class="reveal delay-2" style="display: flex; flex-direction: column; gap: 15px;">
+                        <h3 class="highlight">案例 B：武大校园环境模拟</h3>
+                        <p style="font-size: clamp(25px, 2vw, 28px); margin:0;">设定百名学生 AI，观察他们在选课季、樱花季的群体行为决策。</p>
+                        <div class="img-showcase" style="border-color: #ff9a9e; color: #ff9a9e;">[ 演示素材：武大模拟实况 ]</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Slide 7: 技术架构 -->
+        <section class="slide">
+            <div class="glass-panel">
+                <h2 class="reveal">硬核底座：是如何构建的？</h2>
+                <p class="reveal delay-1">一个全栈协同的现代化软件工程架构设计：</p>
+                <div class="arch-flow reveal delay-2" style="margin-top: 40px;">
+                    <div class="arch-box">Vue 前端<br><span style="font-size: 20px; font-weight:normal;">(可视化大屏交互)</span></div>
+                    <div class="flow-path"><div class="data-packet"></div></div>
+                    <div class="arch-box highlight" style="border-color: var(--accent-blue);">FastAPI 后端<br><span style="font-size: 20px; font-weight:normal;">(高并发任务调度)</span></div>
+                    <div class="flow-path"><div class="data-packet" style="animation-delay: 1s;"></div></div>
+                    <div class="arch-box" style="border-color: #a29bfe;">LLM 推理引擎<br><span style="font-size: 20px; font-weight:normal;">(大脑核心计算)</span></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Slide 8: 核心优势 -->
+        <section class="slide">
+            <div class="glass-panel">
+                <h2 class="reveal">项目核心竞争力</h2>
+                <div class="split-layout" style="align-items: start; margin-top: 10px;">
+                    <ul class="reveal delay-1" style="display: flex; flex-direction: column; gap: 10px;">
+                        <li>
+                            <span class="highlight">零门槛全视窗操作：</span>
+                            <br>无需编写代码，小白也能在网页上点点鼠标开启百人 AI 模拟。
+                        </li>
+                        <li>
+                            <span class="highlight">全链路可视化：</span>
+                            <br>所有的记忆图谱、社交关系网均实现前端动态渲染。
+                        </li>
+                        <li>
+                            <span class="highlight">高度开源可扩展：</span>
+                            <br>提供标准接口，轻松接入本地模型或第三方大模型。
+                        </li>
+                    </ul>
+                    <div class="reveal delay-2" style="display:flex; justify-content:center; align-items:center; height:90%;">
+                        <div style="font-size: clamp(200px, 10vw, 300px); color: var(--glass-border);">🏆</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Slide 9: 应用前景 -->
+        <section class="slide">
+            <div class="glass-panel">
+                <h2 class="reveal">MiroFish 的未来前景</h2>
+                <p class="reveal delay-1">从数字实验室走向广阔的现实应用领域：</p>
+                <div class="split-layout" style="margin-top: 30px;">
+                    <div class="glass-panel reveal delay-2" style="padding: 20px; box-shadow: none;">
+                        <h3 class="highlight">🎮 游戏开发领域</h3>
+                        <p style="font-size: clamp(25px, 2vw, 28px);">用于自动生成开放世界 NPC 之间的生态交互，打造真正活着的“西部世界”。</p>
+                    </div>
+                    <div class="glass-panel reveal delay-3" style="padding: 20px; box-shadow: none;">
+                        <h3 class="highlight">📊 社会学与舆情</h3>
+                        <p style="font-size: clamp(25px, 2vw, 28px);">作为数字沙盒，用于新政策颁布前的虚拟社会反应实验与舆情危机推演。</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Slide 10: 结尾 -->
+        <section class="slide">
+            <div class="glass-panel reveal" style="text-align: center;">
+                <h1 style="font-size: clamp(80px, 8vw, 120px);">Q & A</h1>
+                <p class="reveal delay-1" style="margin-top: 40px; font-size: clamp(35px, 3.5vw, 45px);">感谢老师与同学们的聆听！</p>
+                <div class="reveal delay-2" style="margin-top: 50px;">
+                    <p>欢迎访问开源仓库：</p>
+                    <p class="highlight" style="font-family: monospace; letter-spacing: 1px;">https://github.com/666ghj/mirofish</p>
+                </div>
+            </div>
+        </section>
+        
+    </div>
+
+    <div class="progress-bar" id="progressBar"></div>
+    <div class="hint">点击鼠标 或 按 ➡️ 键翻页</div>
+
+    <script>
+        // 幻灯片逻辑引擎
+        const slides = document.querySelectorAll('.slide');
+        const progressBar = document.getElementById('progressBar');
+        let currentSlide = 0;
+        let isAnimating = false;
+
+        function updateProgress() {
+            const progress = ((currentSlide) / (slides.length - 1)) * 100;
+            progressBar.style.width = progress + '%';
+        }
+
+        function goToSlide(index) {
+            if (isAnimating) return;
+            if (index < 0 || index >= slides.length) return;
+            
+            isAnimating = true;
+            
+            // 移除当前活动状态
+            slides[currentSlide].classList.remove('active');
+            
+            currentSlide = index;
+            
+            // 激活新的幻灯片
+            slides[currentSlide].classList.add('active');
+            updateProgress();
+
+            // 防抖，防止连续快速翻页导致动画断层
+            setTimeout(() => { isAnimating = false; }, 800);
+        }
+
+        // 键盘监听
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') {
+                goToSlide(currentSlide + 1);
+            } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+                goToSlide(currentSlide - 1);
+            }
+        });
+
+        // 鼠标点击右侧区域下一页，左侧区域上一页
+        document.addEventListener('click', (e) => {
+            const clickX = e.clientX;
+            const screenWidth = window.innerWidth;
+            if (clickX > screenWidth / 2) {
+                goToSlide(currentSlide + 1);
+            } else {
+                goToSlide(currentSlide - 1);
+            }
+        });
+
+        // 初始化
+        updateProgress();
+    </script>
+</body>
+</html>

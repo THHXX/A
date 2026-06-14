@@ -1,0 +1,59 @@
+@startuml
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontSize 12
+skinparam state {
+  BorderColor #2563eb
+  BackgroundColor #eff6ff
+  FontColor #1e3a8a
+}
+
+' ── 四个逻辑分组用注释标注 ──
+
+' ═══════════════ 第1组：项目相关用例 ═══════════════
+state "项目界面" as 项目界面 #e8f4f8
+note right of 项目界面 : UC-01 创建项目\nUC-02 管理项目
+
+' ═══════════════ 第2组：本体与图谱相关用例 ═══════════════
+state "本体界面" as 本体界面 #fef3c7
+note right of 本体界面 : UC-03 生成本体定义
+
+state "图谱界面" as 图谱界面 #fef3c7
+note right of 图谱界面 : UC-04 构建知识图谱
+
+' ═══════════════ 第3组：仿真相关用例 ═══════════════
+state "Agent界面" as Agent界面 #dcfce7
+note right of Agent界面 : UC-05 生成Agent人设\nUC-06 生成模拟配置\nUC-07 启动并监控模拟
+
+' ═══════════════ 第4组：报告与交互相关用例 ═══════════════
+state "报告界面" as 报告界面 #f3e8ff
+note right of 报告界面 : UC-08 生成并查看报告\nUC-09 采访Agent\nUC-10 与报告对话
+
+' ── 导航跳转 ──
+[*] --> 项目界面 : 用户进入系统
+
+项目界面 --> 本体界面 : ① 上传文档\n生成本体
+本体界面 --> 图谱界面 : ② 本体确认\n构建图谱
+图谱界面 --> Agent界面 : ③ 图谱完成\n配置仿真环境
+Agent界面 --> 报告界面 : ④ 模拟结束\n生成预测报告
+
+报告界面 ..> Agent界面 : ⑤ 采访Agent\n（可选返回）
+
+' ── 分组边界 ──
+note top of 项目界面
+  **第1组** 项目界面 · 项目控制器 · 项目存储
+end note
+
+note top of Agent界面
+  **第3组** Agent界面 · Agent控制器 · 仿真存储
+end note
+
+note bottom of 报告界面
+  **第4组** 报告界面 · 报告控制器 · 报告存储
+end note
+
+note bottom of 图谱界面
+  **第2组** 本体/图谱界面 · 本体/图谱控制器 · 图谱存储
+end note
+
+@enduml

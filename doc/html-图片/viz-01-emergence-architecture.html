@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>MiroFish · 群体涌现预测模型架构图</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+    background: radial-gradient(ellipse at top, #0a0e27 0%, #050816 60%, #000 100%);
+    color: #e8ecff;
+    min-height: 100vh;
+    padding: 32px 24px;
+    overflow-x: hidden;
+  }
+  .header {
+    text-align: center;
+    margin-bottom: 28px;
+  }
+  .header h1 {
+    font-size: 30px;
+    font-weight: 700;
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 50%, #b794f6 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 8px;
+  }
+  .header p {
+    color: #8a93b8;
+    font-size: 14px;
+    letter-spacing: 1px;
+  }
+  .stage {
+    display: grid;
+    grid-template-columns: 1fr 1.4fr 1fr;
+    gap: 20px;
+    max-width: 1500px;
+    margin: 0 auto;
+    align-items: stretch;
+  }
+  .panel {
+    background: linear-gradient(160deg, rgba(30,40,80,0.55), rgba(15,20,45,0.85));
+    border: 1px solid rgba(120,150,240,0.25);
+    border-radius: 18px;
+    padding: 22px;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 12px 40px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.05);
+    position: relative;
+  }
+  .panel-title {
+    font-size: 13px;
+    color: #4facfe;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 6px;
+  }
+  .panel-subtitle {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 18px;
+    color: #fff;
+  }
+  .seed-list .item, .output-list .item {
+    background: rgba(79,172,254,0.08);
+    border-left: 3px solid #4facfe;
+    padding: 10px 12px;
+    margin-bottom: 10px;
+    border-radius: 6px;
+    font-size: 13px;
+    transition: all .3s;
+  }
+  .seed-list .item:hover, .output-list .item:hover {
+    background: rgba(79,172,254,0.18);
+    transform: translateX(4px);
+  }
+  .seed-list .item .icon, .output-list .item .icon {
+    display: inline-block;
+    margin-right: 8px;
+    font-size: 16px;
+  }
+  .seed-list .item strong, .output-list .item strong {
+    color: #00f2fe;
+    display: block;
+    margin-bottom: 2px;
+  }
+  .seed-list .item span, .output-list .item span {
+    color: #a8b1d4;
+    font-size: 12px;
+  }
+  /* Center: Digital Sandbox */
+  .sandbox {
+    text-align: center;
+    border-color: rgba(183,148,246,0.35);
+    background: linear-gradient(160deg, rgba(60,30,90,0.45), rgba(20,15,45,0.85));
+  }
+  .sandbox .panel-title { color: #b794f6; }
+  .agent-canvas {
+    position: relative;
+    height: 320px;
+    margin: 12px 0;
+    border-radius: 12px;
+    background:
+      radial-gradient(circle at 50% 50%, rgba(183,148,246,0.12) 0%, transparent 70%),
+      repeating-linear-gradient(0deg, rgba(255,255,255,0.03) 0 1px, transparent 1px 30px),
+      repeating-linear-gradient(90deg, rgba(255,255,255,0.03) 0 1px, transparent 1px 30px);
+    overflow: hidden;
+    border: 1px solid rgba(183,148,246,0.2);
+  }
+  .agent {
+    position: absolute;
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: radial-gradient(circle, #fff 0%, #4facfe 60%, transparent 100%);
+    box-shadow: 0 0 8px #4facfe;
+    animation: drift 8s ease-in-out infinite;
+  }
+  .agent.purple { background: radial-gradient(circle, #fff, #b794f6 60%, transparent); box-shadow: 0 0 8px #b794f6; }
+  .agent.cyan { background: radial-gradient(circle, #fff, #00f2fe 60%, transparent); box-shadow: 0 0 8px #00f2fe; }
+  .agent.pink { background: radial-gradient(circle, #fff, #ff6ec7 60%, transparent); box-shadow: 0 0 8px #ff6ec7; }
+  @keyframes drift {
+    0%,100% { transform: translate(0,0); }
+    25% { transform: translate(20px,-15px); }
+    50% { transform: translate(-15px,20px); }
+    75% { transform: translate(15px,15px); }
+  }
+  .conn-line {
+    position: absolute;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(183,148,246,0.6), transparent);
+    transform-origin: 0 50%;
+    animation: pulse-line 3s ease-in-out infinite;
+  }
+  @keyframes pulse-line {
+    0%,100% { opacity: .15; }
+    50% { opacity: .8; }
+  }
+  .platform-tags {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 12px;
+  }
+  .tag {
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 12px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.15);
+  }
+  .tag.twitter { color: #1da1f2; border-color: rgba(29,161,242,0.4); }
+  .tag.reddit { color: #ff4500; border-color: rgba(255,69,0,0.4); }
+  .stat-row {
+    display: flex;
+    justify-content: space-around;
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px dashed rgba(183,148,246,0.2);
+  }
+  .stat .num {
+    font-size: 22px;
+    font-weight: 700;
+    color: #b794f6;
+    font-family: 'Consolas', monospace;
+  }
+  .stat .lbl {
+    font-size: 11px;
+    color: #8a93b8;
+    margin-top: 2px;
+  }
+  /* Right: Output */
+  .output { border-color: rgba(0,242,254,0.35); }
+  .output .panel-title { color: #00f2fe; }
+  .output-list .item { border-left-color: #00f2fe; background: rgba(0,242,254,0.06); }
+  .god-view {
+    margin-top: 14px;
+    padding: 14px;
+    background: linear-gradient(135deg, rgba(255,193,7,0.1), rgba(255,87,34,0.1));
+    border: 1px solid rgba(255,193,7,0.3);
+    border-radius: 10px;
+  }
+  .god-view .gv-title {
+    font-size: 13px;
+    color: #ffc107;
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+  .god-view .gv-desc {
+    font-size: 12px;
+    color: #c8d0e8;
+    line-height: 1.6;
+  }
+  /* Arrows between panels */
+  .flow-arrow {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 10;
+    pointer-events: none;
+  }
+  .flow-arrow svg { display: block; }
+  .arrow-1 { left: calc(33% - 30px); }
+  .arrow-2 { right: calc(33% - 30px); }
+  .legend {
+    max-width: 1500px;
+    margin: 28px auto 0;
+    display: flex;
+    justify-content: center;
+    gap: 28px;
+    flex-wrap: wrap;
+    font-size: 12px;
+    color: #8a93b8;
+  }
+  .legend-item { display: flex; align-items: center; gap: 6px; }
+  .dot { width: 10px; height: 10px; border-radius: 50%; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>群体涌现预测模型 · 系统架构图</h1>
+  <p>From Real-World Seeds → Digital Sandbox Simulation → Predictive Insight</p>
+</div>
+
+<div class="stage" style="position: relative;">
+
+  <!-- LEFT: Seed Input -->
+  <div class="panel">
+    <div class="panel-title">▎ INPUT</div>
+    <div class="panel-subtitle">现实世界种子信息</div>
+    <div class="seed-list">
+      <div class="item">
+        <span class="icon">📰</span><strong>突发新闻</strong>
+        <span>实时事件 · 舆论起爆点</span>
+      </div>
+      <div class="item">
+        <span class="icon">📜</span><strong>政策草案</strong>
+        <span>法规文件 · 社会变量</span>
+      </div>
+      <div class="item">
+        <span class="icon">📈</span><strong>金融信号</strong>
+        <span>市场数据 · 趋势指标</span>
+      </div>
+      <div class="item">
+        <span class="icon">📖</span><strong>文学文本</strong>
+        <span>小说脚本 · 创意脑洞</span>
+      </div>
+    </div>
+    <div style="margin-top: 16px; padding: 10px; background: rgba(79,172,254,0.08); border-radius: 8px; font-size: 12px; color: #a8b1d4; text-align: center;">
+      🔍 GraphRAG 实体抽取<br>
+      <span style="color:#4facfe;">→ 知识图谱 (FR-01)</span>
+    </div>
+  </div>
+
+  <!-- CENTER: Digital Sandbox -->
+  <div class="panel sandbox">
+    <div class="panel-title">▎ SIMULATION CORE</div>
+    <div class="panel-subtitle">数字沙盘 · 平行世界仿真</div>
+    <div class="agent-canvas" id="canvas"></div>
+    <div class="platform-tags">
+      <span class="tag twitter">𝕏 Twitter 仿真</span>
+      <span class="tag reddit">🅡 Reddit 仿真</span>
+    </div>
+    <div class="stat-row">
+      <div class="stat"><div class="num">100~5K</div><div class="lbl">智能体规模</div></div>
+      <div class="stat"><div class="num">40+</div><div class="lbl">演化轮数</div></div>
+      <div class="stat"><div class="num">∞</div><div class="lbl">交互边数</div></div>
+    </div>
+  </div>
+
+  <!-- RIGHT: Output -->
+  <div class="panel output">
+    <div class="panel-title">▎ OUTPUT &amp; INTERACTION</div>
+    <div class="panel-subtitle">预测报告 · 深度交互</div>
+    <div class="output-list">
+      <div class="item">
+        <span class="icon">📊</span><strong>结构化预测报告</strong>
+        <span>趋势 · 关键事件 · 群体观点</span>
+      </div>
+      <div class="item">
+        <span class="icon">💬</span><strong>多轮自然语言对话</strong>
+        <span>与任意 Agent / ReportAgent</span>
+      </div>
+      <div class="item">
+        <span class="icon">🔗</span><strong>可溯源数据链路</strong>
+        <span>章节 → 仿真原始数据</span>
+      </div>
+    </div>
+    <div class="god-view">
+      <div class="gv-title">👁️ 上帝视角 · 变量注入</div>
+      <div class="gv-desc">用户可在仿真过程中动态注入新事件、调整外部变量，观察群体行为如何重新涌现，让每一个"如果"都能看见结果。</div>
+    </div>
+  </div>
+
+  <!-- Flow arrows -->
+  <div class="flow-arrow arrow-1">
+    <svg width="60" height="40">
+      <defs>
+        <marker id="arr1" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+          <path d="M0,0 L8,3 L0,6 Z" fill="#b794f6"/>
+        </marker>
+        <linearGradient id="g1" x1="0" x2="1">
+          <stop offset="0" stop-color="#4facfe"/>
+          <stop offset="1" stop-color="#b794f6"/>
+        </linearGradient>
+      </defs>
+      <line x1="0" y1="20" x2="50" y2="20" stroke="url(#g1)" stroke-width="2.5" marker-end="url(#arr1)" stroke-dasharray="4 3">
+        <animate attributeName="stroke-dashoffset" from="0" to="-14" dur="1s" repeatCount="indefinite"/>
+      </line>
+    </svg>
+  </div>
+  <div class="flow-arrow arrow-2">
+    <svg width="60" height="40">
+      <defs>
+        <marker id="arr2" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+          <path d="M0,0 L8,3 L0,6 Z" fill="#00f2fe"/>
+        </marker>
+        <linearGradient id="g2" x1="0" x2="1">
+          <stop offset="0" stop-color="#b794f6"/>
+          <stop offset="1" stop-color="#00f2fe"/>
+        </linearGradient>
+      </defs>
+      <line x1="0" y1="20" x2="50" y2="20" stroke="url(#g2)" stroke-width="2.5" marker-end="url(#arr2)" stroke-dasharray="4 3">
+        <animate attributeName="stroke-dashoffset" from="0" to="-14" dur="1s" repeatCount="indefinite"/>
+      </line>
+    </svg>
+  </div>
+
+</div>
+
+<div class="legend">
+  <div class="legend-item"><div class="dot" style="background:#4facfe"></div>种子输入层</div>
+  <div class="legend-item"><div class="dot" style="background:#b794f6"></div>多智能体仿真层</div>
+  <div class="legend-item"><div class="dot" style="background:#00f2fe"></div>报告与交互层</div>
+  <div class="legend-item"><div class="dot" style="background:#ffc107"></div>用户控制层</div>
+</div>
+
+<script>
+  // Generate animated agents
+  const canvas = document.getElementById('canvas');
+  const colors = ['', 'purple', 'cyan', 'pink'];
+  const agentCount = 60;
+  const positions = [];
+  for (let i = 0; i < agentCount; i++) {
+    const a = document.createElement('div');
+    a.className = 'agent ' + colors[i % colors.length];
+    const x = Math.random() * 92 + 2;
+    const y = Math.random() * 88 + 4;
+    a.style.left = x + '%';
+    a.style.top = y + '%';
+    a.style.animationDelay = (Math.random() * 6) + 's';
+    a.style.animationDuration = (5 + Math.random() * 6) + 's';
+    canvas.appendChild(a);
+    positions.push({x, y});
+  }
+  // Connection lines
+  for (let i = 0; i < 25; i++) {
+    const a = positions[Math.floor(Math.random() * positions.length)];
+    const b = positions[Math.floor(Math.random() * positions.length)];
+    const dx = b.x - a.x, dy = b.y - a.y;
+    const len = Math.sqrt(dx*dx + dy*dy);
+    const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+    const line = document.createElement('div');
+    line.className = 'conn-line';
+    line.style.left = a.x + '%';
+    line.style.top = a.y + '%';
+    line.style.width = len + '%';
+    line.style.transform = `rotate(${angle}deg)`;
+    line.style.animationDelay = (Math.random() * 3) + 's';
+    canvas.appendChild(line);
+  }
+</script>
+
+</body>
+</html>

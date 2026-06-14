@@ -1,0 +1,1941 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MiroFish · 群体智能预测引擎 — 需求分析答辩</title>
+
+    <!-- Fontshare: 中文用 Noto Serif SC + 英文标题用 Space Grotesk + 数字用 JetBrains Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700;900&family=Noto+Serif+SC:wght@400;700;900&family=Space+Grotesk:wght@300;400;500;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+
+    <style>
+    /* ===========================================
+       THEME — 深蓝科技感 · 鱼跃电光
+       =========================================== */
+    :root {
+        --bg-deep:      #050b1a;
+        --bg-primary:   #0b2447;
+        --bg-secondary: #0f2d5e;
+        --bg-card:      rgba(15, 45, 94, 0.55);
+        --line:         rgba(96, 165, 250, 0.18);
+
+        --text-primary:   #f0f7ff;
+        --text-secondary: #9bb3d4;
+        --text-tertiary:  #5d7da8;
+
+        --accent:       #2563eb;   /* 电光蓝 */
+        --accent-cyan:  #38bdf8;   /* 鱼鳞青 */
+        --accent-glow:  #60a5fa;
+        --accent-warm:  #f59e0b;   /* 警示金 */
+
+        --font-zh:      'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+        --font-serif:   'Noto Serif SC', 'Source Han Serif SC', serif;
+        --font-en:      'Space Grotesk', 'Inter', sans-serif;
+        --font-mono:    'JetBrains Mono', 'Fira Code', monospace;
+
+        --title-size:    clamp(2rem, 6vw, 5.5rem);
+        --h1-size:       clamp(1.75rem, 4.5vw, 3.75rem);
+        --h2-size:       clamp(1.25rem, 3vw, 2.25rem);
+        --body-size:     clamp(0.85rem, 1.3vw, 1.1rem);
+        --small-size:    clamp(0.7rem, 1vw, 0.9rem);
+        --label-size:    clamp(0.65rem, 0.9vw, 0.8rem);
+
+        --slide-padding: clamp(2rem, 5vw, 5rem);
+        --content-gap:   clamp(0.75rem, 2vw, 2rem);
+        --element-gap:   clamp(0.4rem, 1vw, 1rem);
+
+        --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+        --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
+        --duration:      0.8s;
+    }
+
+    /* ===========================================
+       BASE
+       =========================================== */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    /* === viewport-base.css 内联开始 === */
+    html, body { height: 100%; overflow-x: hidden; }
+    html { scroll-snap-type: y mandatory; scroll-behavior: smooth; }
+    .slide {
+        width: 100vw;
+        height: 100vh;
+        height: 100dvh;
+        overflow: hidden;
+        scroll-snap-align: start;
+        display: flex;
+        flex-direction: column;
+        position: relative;
+    }
+    .slide-content {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        max-height: 100%;
+        overflow: hidden;
+        padding: var(--slide-padding);
+    }
+    img, .image-container {
+        max-width: 100%;
+        max-height: min(50vh, 400px);
+        object-fit: contain;
+    }
+    @media (max-height: 700px) {
+        :root {
+            --slide-padding: clamp(1rem, 3vw, 2.5rem);
+            --content-gap:   clamp(0.5rem, 1.5vw, 1rem);
+            --title-size:    clamp(1.5rem, 4.5vw, 3rem);
+            --h1-size:       clamp(1.25rem, 3.5vw, 2.5rem);
+            --h2-size:       clamp(1rem, 2.5vw, 1.75rem);
+        }
+    }
+    @media (max-height: 600px) {
+        :root {
+            --slide-padding: clamp(0.75rem, 2.5vw, 1.75rem);
+            --title-size:    clamp(1.25rem, 4vw, 2.25rem);
+            --body-size:     clamp(0.75rem, 1.2vw, 0.95rem);
+        }
+        .nav-dots, .keyboard-hint, .decorative { display: none; }
+    }
+    @media (max-height: 500px) {
+        :root {
+            --slide-padding: clamp(0.5rem, 2vw, 1rem);
+            --title-size:    clamp(1.1rem, 3.5vw, 1.75rem);
+        }
+    }
+    @media (max-width: 600px) {
+        :root { --title-size: clamp(1.25rem, 7vw, 2.5rem); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+        *, *::before, *::after {
+            animation-duration: 0.01ms !important;
+            transition-duration: 0.2s !important;
+        }
+        html { scroll-behavior: auto; }
+    }
+    /* === viewport-base.css 内联结束 === */
+
+    body {
+        background: var(--bg-deep);
+        color: var(--text-primary);
+        font-family: var(--font-zh);
+        font-weight: 400;
+        line-height: 1.5;
+        -webkit-font-smoothing: antialiased;
+        letter-spacing: 0.01em;
+    }
+
+    /* ===========================================
+       全局背景：深海星图 + 渐变光晕
+       =========================================== */
+    body::before {
+        content: '';
+        position: fixed;
+        inset: 0;
+        background:
+            radial-gradient(ellipse at 15% 0%, rgba(37, 99, 235, 0.22), transparent 50%),
+            radial-gradient(ellipse at 85% 100%, rgba(56, 189, 248, 0.18), transparent 55%),
+            radial-gradient(ellipse at 50% 50%, rgba(11, 36, 71, 0.4), transparent 70%);
+        pointer-events: none;
+        z-index: 0;
+    }
+    body::after {
+        content: '';
+        position: fixed;
+        inset: 0;
+        background-image:
+            radial-gradient(1px 1px at 20% 30%, rgba(96,165,250,0.6) 50%, transparent),
+            radial-gradient(1px 1px at 70% 60%, rgba(96,165,250,0.4) 50%, transparent),
+            radial-gradient(1px 1px at 40% 80%, rgba(56,189,248,0.5) 50%, transparent),
+            radial-gradient(1.5px 1.5px at 85% 25%, rgba(96,165,250,0.7) 50%, transparent),
+            radial-gradient(1px 1px at 10% 75%, rgba(56,189,248,0.4) 50%, transparent),
+            radial-gradient(1px 1px at 60% 15%, rgba(96,165,250,0.5) 50%, transparent);
+        background-size: 100vw 100vh;
+        pointer-events: none;
+        opacity: 0.6;
+        z-index: 0;
+        animation: starfield 60s linear infinite;
+    }
+    @keyframes starfield {
+        from { background-position: 0 0; }
+        to   { background-position: 100vw 100vh; }
+    }
+
+    .slide { z-index: 1; }
+    .slide-content { z-index: 2; }
+
+    /* ===========================================
+       通用：页码、品牌徽标、装饰
+       =========================================== */
+    .slide-meta {
+        position: absolute;
+        bottom: clamp(1rem, 2.5vh, 2rem);
+        left: var(--slide-padding);
+        right: var(--slide-padding);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-family: var(--font-mono);
+        font-size: var(--label-size);
+        color: var(--text-tertiary);
+        letter-spacing: 0.15em;
+        text-transform: uppercase;
+        z-index: 5;
+    }
+    .slide-meta .brand {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    .slide-meta .brand::before {
+        content: '';
+        width: 6px;
+        height: 6px;
+        background: var(--accent-cyan);
+        box-shadow: 0 0 12px var(--accent-cyan);
+        border-radius: 50%;
+    }
+    .slide-meta .pageno strong {
+        color: var(--text-primary);
+        font-weight: 700;
+    }
+
+    /* ===========================================
+       动画：reveal 入场
+       =========================================== */
+    .reveal {
+        opacity: 0;
+        transform: translateY(40px);
+        transition: opacity var(--duration) var(--ease-out-expo),
+                    transform var(--duration) var(--ease-out-expo);
+    }
+    .slide.visible .reveal { opacity: 1; transform: translateY(0); }
+
+    .slide.visible .reveal:nth-child(1)  { transition-delay: 0.05s; }
+    .slide.visible .reveal:nth-child(2)  { transition-delay: 0.15s; }
+    .slide.visible .reveal:nth-child(3)  { transition-delay: 0.25s; }
+    .slide.visible .reveal:nth-child(4)  { transition-delay: 0.35s; }
+    .slide.visible .reveal:nth-child(5)  { transition-delay: 0.45s; }
+    .slide.visible .reveal:nth-child(6)  { transition-delay: 0.55s; }
+    .slide.visible .reveal:nth-child(7)  { transition-delay: 0.65s; }
+
+    .reveal-stagger > * {
+        opacity: 0;
+        transform: translateY(30px);
+        transition: opacity 0.7s var(--ease-out-expo),
+                    transform 0.7s var(--ease-out-expo);
+    }
+    .slide.visible .reveal-stagger > *:nth-child(1) { transition-delay: 0.10s; opacity:1; transform:none; }
+    .slide.visible .reveal-stagger > *:nth-child(2) { transition-delay: 0.20s; opacity:1; transform:none; }
+    .slide.visible .reveal-stagger > *:nth-child(3) { transition-delay: 0.30s; opacity:1; transform:none; }
+    .slide.visible .reveal-stagger > *:nth-child(4) { transition-delay: 0.40s; opacity:1; transform:none; }
+    .slide.visible .reveal-stagger > *:nth-child(5) { transition-delay: 0.50s; opacity:1; transform:none; }
+    .slide.visible .reveal-stagger > *:nth-child(6) { transition-delay: 0.60s; opacity:1; transform:none; }
+
+    /* ===========================================
+       底部进度条 + 顶部导航点
+       =========================================== */
+    .progress-bar {
+        position: fixed;
+        bottom: 0; left: 0;
+        height: 3px;
+        background: linear-gradient(90deg, var(--accent), var(--accent-cyan));
+        width: 0%;
+        z-index: 100;
+        transition: width 0.4s var(--ease-out-quart);
+        box-shadow: 0 0 16px var(--accent-glow);
+    }
+    .nav-dots {
+        position: fixed;
+        right: clamp(0.5rem, 1.5vw, 1.5rem);
+        top: 50%;
+        transform: translateY(-50%);
+        display: flex;
+        flex-direction: column;
+        gap: 0.6rem;
+        z-index: 50;
+    }
+    .nav-dot {
+        width: 8px; height: 8px;
+        border-radius: 50%;
+        background: rgba(155, 179, 212, 0.25);
+        border: none;
+        cursor: pointer;
+        padding: 0;
+        transition: all 0.3s ease;
+    }
+    .nav-dot.active {
+        background: var(--accent-cyan);
+        box-shadow: 0 0 12px var(--accent-cyan);
+        transform: scale(1.4);
+    }
+    .nav-dot:hover { background: var(--accent-glow); }
+
+    .keyboard-hint {
+        position: fixed;
+        bottom: 1rem;
+        right: 1.25rem;
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        color: var(--text-tertiary);
+        z-index: 50;
+        opacity: 0.6;
+    }
+    .keyboard-hint kbd {
+        background: rgba(96, 165, 250, 0.1);
+        border: 1px solid var(--line);
+        border-radius: 4px;
+        padding: 1px 6px;
+        margin: 0 2px;
+    }
+
+    /* ===========================================
+       LIGHTBOX — 图片点击全屏预览
+       =========================================== */
+    .slide img {
+        cursor: zoom-in;
+        transition: transform 0.3s var(--ease-out-expo);
+    }
+    .slide img:hover { transform: scale(1.015); }
+
+    .lightbox {
+        position: fixed;
+        inset: 0;
+        background: rgba(5, 11, 26, 0.96);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        z-index: 9999;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.35s var(--ease-out-expo), visibility 0.35s;
+        cursor: zoom-out;
+        padding: clamp(1rem, 4vw, 3rem);
+    }
+    .lightbox.active {
+        opacity: 1;
+        visibility: visible;
+    }
+    .lightbox-stage {
+        position: relative;
+        max-width: 95vw;
+        max-height: 90vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transform: scale(0.92);
+        transition: transform 0.4s var(--ease-out-expo);
+    }
+    .lightbox.active .lightbox-stage { transform: scale(1); }
+    .lightbox img {
+        max-width: 95vw;
+        max-height: 90vh;
+        width: auto; height: auto;
+        object-fit: contain;
+        border-radius: 12px;
+        box-shadow: 0 30px 100px rgba(0,0,0,0.7),
+                    0 0 0 1px rgba(96,165,250,0.25);
+        cursor: default;
+        background: #fff;
+    }
+    .lightbox-close {
+        position: absolute;
+        top: clamp(1rem, 2.5vh, 2rem);
+        right: clamp(1rem, 2.5vw, 2rem);
+        width: 48px; height: 48px;
+        border-radius: 50%;
+        border: 1px solid rgba(96,165,250,0.4);
+        background: rgba(11, 36, 71, 0.7);
+        color: var(--text-primary);
+        font-size: 1.4rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 2;
+        transition: all 0.2s ease;
+    }
+    .lightbox-close:hover {
+        background: var(--accent);
+        border-color: var(--accent-cyan);
+        transform: rotate(90deg);
+    }
+    .lightbox-caption {
+        position: absolute;
+        bottom: -2.5rem;
+        left: 50%;
+        transform: translateX(-50%);
+        font-family: var(--font-mono);
+        font-size: var(--small-size);
+        color: var(--text-secondary);
+        letter-spacing: 0.15em;
+        white-space: nowrap;
+    }
+    .lightbox-hint {
+        position: absolute;
+        bottom: clamp(1rem, 2.5vh, 2rem);
+        left: 50%;
+        transform: translateX(-50%);
+        font-family: var(--font-mono);
+        font-size: var(--label-size);
+        color: var(--text-tertiary);
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+    }
+    .lightbox-hint kbd {
+        background: rgba(96,165,250,0.15);
+        border: 1px solid var(--line);
+        border-radius: 4px;
+        padding: 2px 8px;
+        margin: 0 4px;
+    }
+
+    /* 当 lightbox 打开时，禁止主内容滚动跳页 */
+    body.lightbox-open { overflow: hidden; }
+
+    /* ===========================================
+       SLIDE 1 — 封面
+       =========================================== */
+    .cover {
+        background:
+            radial-gradient(ellipse at 75% 50%, rgba(37, 99, 235, 0.25), transparent 50%),
+            linear-gradient(135deg, var(--bg-deep) 0%, #0a1a3a 100%);
+    }
+    .cover .slide-content {
+        flex-direction: row;
+        align-items: center;
+        gap: clamp(2rem, 5vw, 5rem);
+    }
+    .cover-text { flex: 1.2; }
+    .cover-visual {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+    }
+    .cover-tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.6rem;
+        padding: 0.4rem 1rem;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        font-family: var(--font-mono);
+        font-size: var(--label-size);
+        color: var(--accent-cyan);
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        margin-bottom: 1.5rem;
+    }
+    .cover-tag::before {
+        content: '';
+        width: 6px; height: 6px;
+        border-radius: 50%;
+        background: var(--accent-cyan);
+        box-shadow: 0 0 10px var(--accent-cyan);
+        animation: pulse 2s ease-in-out infinite;
+    }
+    @keyframes pulse {
+        0%,100% { opacity: 1; transform: scale(1); }
+        50%     { opacity: 0.5; transform: scale(1.4); }
+    }
+    .cover-title {
+        font-family: var(--font-serif);
+        font-size: var(--title-size);
+        font-weight: 900;
+        line-height: 1.1;
+        letter-spacing: -0.02em;
+        margin-bottom: 0.5rem;
+    }
+    .cover-title .accent {
+        background: linear-gradient(135deg, var(--accent-cyan), var(--accent-glow));
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+    }
+    .cover-subtitle {
+        font-family: var(--font-en);
+        font-size: clamp(1rem, 1.8vw, 1.5rem);
+        font-weight: 300;
+        color: var(--text-secondary);
+        letter-spacing: 0.02em;
+        margin-bottom: 2rem;
+    }
+    .cover-tagline {
+        font-size: clamp(1.1rem, 2vw, 1.6rem);
+        font-weight: 500;
+        color: var(--text-primary);
+        margin-bottom: 2.5rem;
+        line-height: 1.4;
+    }
+    .cover-tagline .highlight {
+        color: var(--accent-cyan);
+        font-weight: 700;
+    }
+    .cover-meta {
+        display: flex;
+        gap: clamp(1.5rem, 4vw, 3rem);
+        flex-wrap: wrap;
+        padding-top: 1.5rem;
+        border-top: 1px solid var(--line);
+    }
+    .cover-meta-item .label {
+        display: block;
+        font-family: var(--font-mono);
+        font-size: var(--label-size);
+        color: var(--text-tertiary);
+        letter-spacing: 0.15em;
+        text-transform: uppercase;
+        margin-bottom: 0.3rem;
+    }
+    .cover-meta-item .value {
+        font-size: var(--body-size);
+        color: var(--text-primary);
+        font-weight: 500;
+    }
+    .cover-logo {
+        width: clamp(220px, 30vw, 380px);
+        height: auto;
+        max-height: 50vh;
+        border-radius: 50%;
+        box-shadow:
+            0 0 0 1px var(--line),
+            0 30px 80px rgba(37, 99, 235, 0.4),
+            0 0 120px rgba(96, 165, 250, 0.25);
+        animation: float 6s ease-in-out infinite;
+    }
+    @keyframes float {
+        0%,100% { transform: translateY(0); }
+        50%     { transform: translateY(-16px); }
+    }
+    .cover-orbit {
+        position: absolute;
+        inset: -10%;
+        border: 1px solid var(--line);
+        border-radius: 50%;
+        animation: rotate 30s linear infinite;
+    }
+    .cover-orbit::before, .cover-orbit::after {
+        content: '';
+        position: absolute;
+        width: 8px; height: 8px;
+        border-radius: 50%;
+        background: var(--accent-cyan);
+        box-shadow: 0 0 16px var(--accent-cyan);
+    }
+    .cover-orbit::before { top: -4px; left: 50%; }
+    .cover-orbit::after { bottom: -4px; left: 30%; background: var(--accent-glow); box-shadow: 0 0 16px var(--accent-glow); }
+    @keyframes rotate {
+        to { transform: rotate(360deg); }
+    }
+
+    /* ===========================================
+       通用：章节标题 + Section 编号
+       =========================================== */
+    .section-header { margin-bottom: clamp(1.5rem, 3vh, 2.5rem); }
+    .section-no {
+        display: block;
+        font-family: var(--font-mono);
+        font-size: var(--small-size);
+        color: var(--accent-cyan);
+        letter-spacing: 0.3em;
+        margin-bottom: 0.6rem;
+    }
+    .section-title {
+        font-family: var(--font-serif);
+        font-size: var(--h1-size);
+        font-weight: 900;
+        line-height: 1.15;
+        letter-spacing: -0.01em;
+    }
+    .section-title .underline {
+        position: relative;
+        display: inline-block;
+    }
+    .section-title .underline::after {
+        content: '';
+        position: absolute;
+        left: 0; bottom: -4px;
+        width: 100%;
+        height: 4px;
+        background: linear-gradient(90deg, var(--accent), var(--accent-cyan));
+        border-radius: 2px;
+    }
+    .section-sub {
+        margin-top: 0.75rem;
+        font-size: var(--body-size);
+        color: var(--text-secondary);
+        max-width: 60ch;
+        line-height: 1.6;
+    }
+
+    /* ===========================================
+       SLIDE 2 — 背景痛点：左右对比
+       =========================================== */
+    .compare {
+        display: grid;
+        grid-template-columns: 1fr auto 1fr;
+        gap: clamp(1rem, 3vw, 3rem);
+        align-items: stretch;
+        margin-top: 1rem;
+    }
+    .compare-col {
+        background: var(--bg-card);
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        padding: clamp(1rem, 2.5vw, 2rem);
+        backdrop-filter: blur(10px);
+    }
+    .compare-col h4 {
+        font-family: var(--font-mono);
+        font-size: var(--small-size);
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        margin-bottom: 1rem;
+    }
+    .compare-col.bad h4 { color: #f87171; }
+    .compare-col.good h4 { color: var(--accent-cyan); }
+    .compare-col h3 {
+        font-size: clamp(1.2rem, 2.4vw, 1.8rem);
+        font-weight: 700;
+        margin-bottom: 1rem;
+        line-height: 1.3;
+    }
+    .compare-col ul { list-style: none; }
+    .compare-col li {
+        font-size: var(--body-size);
+        color: var(--text-secondary);
+        padding: 0.5rem 0 0.5rem 1.5rem;
+        position: relative;
+        line-height: 1.5;
+        border-bottom: 1px dashed var(--line);
+    }
+    .compare-col li:last-child { border-bottom: none; }
+    .compare-col.bad li::before {
+        content: '✕';
+        position: absolute;
+        left: 0;
+        color: #f87171;
+        font-weight: 700;
+    }
+    .compare-col.good li::before {
+        content: '◆';
+        position: absolute;
+        left: 0;
+        color: var(--accent-cyan);
+    }
+    .compare-vs {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: var(--font-en);
+        font-size: clamp(1.5rem, 3vw, 2.5rem);
+        font-weight: 700;
+        color: var(--text-tertiary);
+        letter-spacing: 0.1em;
+    }
+
+    /* ===========================================
+       SLIDE 3 — 一句话故事
+       =========================================== */
+    .story {
+        text-align: center;
+        max-width: 1100px;
+        margin: 0 auto;
+    }
+    .story-hook {
+        font-family: var(--font-serif);
+        font-size: clamp(1.8rem, 4vw, 3.2rem);
+        font-weight: 900;
+        line-height: 1.4;
+        margin-bottom: 2rem;
+    }
+    .story-hook .keyword {
+        color: var(--accent-cyan);
+        position: relative;
+        white-space: nowrap;
+    }
+    .story-hook .keyword::after {
+        content: '';
+        position: absolute;
+        left: 0; right: 0;
+        bottom: 0.05em;
+        height: 0.25em;
+        background: rgba(56, 189, 248, 0.25);
+        z-index: -1;
+        border-radius: 2px;
+    }
+    .story-arrow {
+        font-family: var(--font-mono);
+        font-size: var(--small-size);
+        color: var(--accent-cyan);
+        letter-spacing: 0.3em;
+        margin: 1.5rem 0;
+    }
+    .story-value {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1.5rem;
+        margin-top: 2rem;
+    }
+    .value-card {
+        padding: 1.25rem 1rem;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        background: var(--bg-card);
+    }
+    .value-card .num {
+        font-family: var(--font-en);
+        font-size: clamp(1.5rem, 3vw, 2.2rem);
+        font-weight: 700;
+        color: var(--accent-cyan);
+        margin-bottom: 0.3rem;
+    }
+    .value-card .label {
+        font-family: var(--font-mono);
+        font-size: var(--label-size);
+        color: var(--text-tertiary);
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        margin-bottom: 0.5rem;
+    }
+    .value-card .desc {
+        font-size: var(--small-size);
+        color: var(--text-secondary);
+        line-height: 1.5;
+    }
+
+    /* ===========================================
+       SLIDE 4 — 用例图
+       =========================================== */
+    .usecase-wrap {
+        flex: 1;
+        display: grid;
+        grid-template-columns: 1fr 1.6fr;
+        gap: clamp(1rem, 3vw, 2.5rem);
+        align-items: center;
+        min-height: 0;
+    }
+    .usecase-text h3 {
+        font-size: clamp(1.1rem, 2vw, 1.5rem);
+        font-weight: 700;
+        margin-bottom: 1rem;
+        color: var(--text-primary);
+    }
+    .usecase-text p {
+        font-size: var(--body-size);
+        color: var(--text-secondary);
+        line-height: 1.7;
+        margin-bottom: 1rem;
+    }
+    .usecase-legend {
+        display: flex;
+        flex-direction: column;
+        gap: 0.6rem;
+        margin-top: 1.5rem;
+    }
+    .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        font-size: var(--small-size);
+    }
+    .legend-dot {
+        width: 14px; height: 14px;
+        border-radius: 4px;
+        border: 1.5px solid;
+        flex-shrink: 0;
+    }
+    .legend-dot.actor   { border-color: #1f3a8a; background: #fff; border-radius: 50%; }
+    .legend-dot.usecase { border-color: var(--accent); background: #eaf2ff; border-radius: 999px; }
+    .legend-dot.ext     { border-color: #c2410c; background: #fff7ed; }
+    .usecase-img {
+        background: #fff;
+        border-radius: 16px;
+        padding: 1rem;
+        border: 1px solid var(--line);
+        max-height: 75vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+    }
+    .usecase-img img {
+        max-height: 70vh;
+        max-width: 100%;
+        object-fit: contain;
+    }
+
+    /* ===========================================
+       SLIDE 5 — 功能需求 6 卡片
+       =========================================== */
+    .fr-mnemonic {
+        display: inline-flex;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        background: rgba(37, 99, 235, 0.15);
+        border: 1px solid var(--accent);
+        border-radius: 999px;
+        font-family: var(--font-serif);
+        font-size: var(--body-size);
+        color: var(--accent-cyan);
+        font-weight: 700;
+        letter-spacing: 0.3em;
+        margin-top: 0.75rem;
+    }
+    .fr-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: clamp(0.5rem, 1.2vw, 1rem);
+        margin-top: 1.5rem;
+        flex: 1;
+        min-height: 0;
+    }
+    .fr-card {
+        background: var(--bg-card);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: clamp(0.85rem, 1.5vw, 1.4rem);
+        position: relative;
+        overflow: hidden;
+        transition: transform 0.3s var(--ease-out-expo),
+                    border-color 0.3s ease;
+    }
+    .fr-card::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0;
+        width: 4px; height: 100%;
+        background: linear-gradient(180deg, var(--accent-cyan), var(--accent));
+        transform: scaleY(0);
+        transform-origin: top;
+        transition: transform 0.5s var(--ease-out-expo);
+    }
+    .slide.visible .fr-card::before { transform: scaleY(1); }
+    .fr-card:hover { transform: translateY(-4px); border-color: var(--accent-cyan); }
+    .fr-no {
+        font-family: var(--font-mono);
+        font-size: var(--label-size);
+        color: var(--accent-cyan);
+        letter-spacing: 0.2em;
+        margin-bottom: 0.4rem;
+    }
+    .fr-name {
+        font-size: clamp(0.95rem, 1.5vw, 1.2rem);
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+        color: var(--text-primary);
+    }
+    .fr-mnem {
+        display: inline-block;
+        font-family: var(--font-serif);
+        font-size: clamp(0.9rem, 1.3vw, 1.05rem);
+        color: var(--accent-warm);
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+        letter-spacing: 0.1em;
+    }
+    .fr-desc {
+        font-size: var(--small-size);
+        color: var(--text-secondary);
+        line-height: 1.55;
+    }
+
+    /* ===========================================
+       SLIDE 6 — 非功能需求六维
+       =========================================== */
+    .nfr-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        grid-template-rows: repeat(2, 1fr);
+        gap: clamp(0.6rem, 1.5vw, 1.2rem);
+        flex: 1;
+        margin-top: 1.5rem;
+        min-height: 0;
+    }
+    .nfr-card {
+        background: var(--bg-card);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: clamp(0.75rem, 1.5vw, 1.4rem);
+        display: flex;
+        flex-direction: column;
+        gap: 0.4rem;
+    }
+    .nfr-icon {
+        font-family: var(--font-en);
+        font-size: clamp(1.5rem, 2.5vw, 2rem);
+        font-weight: 700;
+        color: var(--accent-cyan);
+        line-height: 1;
+        margin-bottom: 0.3rem;
+    }
+    .nfr-name {
+        font-size: clamp(0.95rem, 1.4vw, 1.15rem);
+        font-weight: 700;
+        color: var(--text-primary);
+    }
+    .nfr-key {
+        font-family: var(--font-mono);
+        font-size: var(--label-size);
+        color: var(--accent-warm);
+        letter-spacing: 0.15em;
+        margin: 0.2rem 0 0.4rem;
+    }
+    .nfr-desc {
+        font-size: var(--small-size);
+        color: var(--text-secondary);
+        line-height: 1.5;
+    }
+
+    /* ===========================================
+       SLIDE 7 — 工作流 5 步
+       =========================================== */
+    .workflow {
+        display: grid;
+        grid-template-columns: 0.85fr 1fr;
+        gap: clamp(1rem, 3vw, 2.5rem);
+        flex: 1;
+        margin-top: 1rem;
+        min-height: 0;
+        align-items: stretch;
+    }
+    .workflow-steps {
+        display: flex;
+        flex-direction: column;
+        gap: clamp(0.4rem, 1vh, 0.9rem);
+        padding: 0.5rem 0;
+    }
+    .wf-step {
+        display: flex;
+        gap: 1rem;
+        padding: clamp(0.6rem, 1.4vw, 1rem);
+        background: var(--bg-card);
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        position: relative;
+    }
+    .wf-step::before {
+        content: '';
+        position: absolute;
+        left: calc(clamp(0.6rem, 1.4vw, 1rem) + 14px);
+        top: 100%;
+        width: 1px;
+        height: clamp(0.4rem, 1vh, 0.9rem);
+        background: var(--line);
+    }
+    .wf-step:last-child::before { display: none; }
+    .wf-num {
+        flex-shrink: 0;
+        width: 28px; height: 28px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--accent), var(--accent-cyan));
+        font-family: var(--font-en);
+        font-size: 0.85rem;
+        font-weight: 700;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 0 16px rgba(56, 189, 248, 0.4);
+    }
+    .wf-text .wf-name {
+        font-size: clamp(0.95rem, 1.4vw, 1.15rem);
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: 0.2rem;
+    }
+    .wf-text .wf-desc {
+        font-size: var(--small-size);
+        color: var(--text-secondary);
+        line-height: 1.45;
+    }
+    .wf-img {
+        background: #fff;
+        border-radius: 16px;
+        padding: 0.5rem;
+        border: 1px solid var(--line);
+        box-shadow: 0 30px 80px rgba(0,0,0,0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        max-height: 75vh;
+    }
+    .wf-img img { max-width: 100%; max-height: 72vh; object-fit: contain; border-radius: 12px; }
+
+    /* ===========================================
+       SLIDE 通用 — 截图展示页（图谱/报告/互动）
+       =========================================== */
+    .showcase {
+        display: grid;
+        grid-template-columns: 1fr 1.6fr;
+        gap: clamp(1rem, 3vw, 2.5rem);
+        flex: 1;
+        margin-top: 1rem;
+        align-items: center;
+        min-height: 0;
+    }
+    .showcase.reverse { grid-template-columns: 1.6fr 1fr; }
+    .showcase-text h3 {
+        font-size: clamp(1.1rem, 2vw, 1.5rem);
+        font-weight: 700;
+        margin-bottom: 0.75rem;
+        color: var(--text-primary);
+    }
+    .showcase-text p {
+        font-size: var(--body-size);
+        color: var(--text-secondary);
+        line-height: 1.7;
+        margin-bottom: 1rem;
+    }
+    .showcase-text ul { list-style: none; }
+    .showcase-text li {
+        font-size: var(--small-size);
+        color: var(--text-secondary);
+        padding: 0.45rem 0 0.45rem 1.4rem;
+        position: relative;
+        line-height: 1.5;
+        border-bottom: 1px dashed var(--line);
+    }
+    .showcase-text li:last-child { border: none; }
+    .showcase-text li::before {
+        content: '▸';
+        position: absolute;
+        left: 0;
+        color: var(--accent-cyan);
+        font-weight: 700;
+    }
+    .showcase-img {
+        background: #0a1730;
+        border-radius: 16px;
+        padding: 0.5rem;
+        border: 1px solid var(--line);
+        box-shadow: 0 30px 80px rgba(0,0,0,0.6),
+                    0 0 0 1px rgba(96,165,250,0.1);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        max-height: 75vh;
+    }
+    .showcase-img img {
+        max-width: 100%;
+        max-height: 72vh;
+        object-fit: contain;
+        border-radius: 12px;
+    }
+
+    /* 双图组合（用于知识图谱页） */
+    .dual-img {
+        display: grid;
+        grid-template-rows: 1.5fr 1fr;
+        gap: 0.75rem;
+        max-height: 75vh;
+    }
+    .dual-img > div {
+        background: #0a1730;
+        border-radius: 12px;
+        padding: 0.4rem;
+        border: 1px solid var(--line);
+        box-shadow: 0 16px 40px rgba(0,0,0,0.5);
+        display: flex; align-items: center; justify-content: center;
+        overflow: hidden;
+    }
+    .dual-img img {
+        max-width: 100%; max-height: 100%;
+        object-fit: contain;
+        border-radius: 8px;
+    }
+
+    /* ===========================================
+       SLIDE 应用场景 — 4 卡片
+       =========================================== */
+    .scenario {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: clamp(0.6rem, 1.5vw, 1.25rem);
+        flex: 1;
+        margin-top: 1.5rem;
+        min-height: 0;
+    }
+    .scn-card {
+        background: var(--bg-card);
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        position: relative;
+        transition: transform 0.4s var(--ease-out-expo);
+    }
+    .scn-card:hover { transform: translateY(-6px); border-color: var(--accent-cyan); }
+    .scn-img {
+        height: 38%;
+        background-size: cover;
+        background-position: center;
+        position: relative;
+    }
+    .scn-img::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(180deg, transparent 0%, var(--bg-card) 100%);
+    }
+    .scn-img.placeholder {
+        background: linear-gradient(135deg, var(--bg-secondary), var(--accent));
+        display: flex; align-items: center; justify-content: center;
+    }
+    .scn-img.placeholder span {
+        font-family: var(--font-en);
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: rgba(255,255,255,0.85);
+        position: relative;
+        z-index: 1;
+    }
+    .scn-body {
+        padding: clamp(0.75rem, 1.5vw, 1.2rem);
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 0.4rem;
+    }
+    .scn-tag {
+        font-family: var(--font-mono);
+        font-size: var(--label-size);
+        color: var(--accent-cyan);
+        letter-spacing: 0.2em;
+    }
+    .scn-name {
+        font-size: clamp(1rem, 1.5vw, 1.25rem);
+        font-weight: 700;
+        color: var(--text-primary);
+    }
+    .scn-desc {
+        font-size: var(--small-size);
+        color: var(--text-secondary);
+        line-height: 1.5;
+    }
+
+    /* ===========================================
+       SLIDE 技术亮点
+       =========================================== */
+    .tech {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: clamp(0.8rem, 2vw, 1.5rem);
+        flex: 1;
+        margin-top: 1.5rem;
+        min-height: 0;
+    }
+    .tech-card {
+        background: var(--bg-card);
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        padding: clamp(1rem, 2vw, 1.5rem);
+        position: relative;
+        overflow: hidden;
+    }
+    .tech-card::before {
+        content: '';
+        position: absolute;
+        top: 0; right: 0;
+        width: 60%; height: 60%;
+        background: radial-gradient(ellipse at top right, rgba(56,189,248,0.15), transparent 70%);
+        pointer-events: none;
+    }
+    .tech-num {
+        font-family: var(--font-en);
+        font-size: clamp(2rem, 3.5vw, 3rem);
+        font-weight: 300;
+        color: var(--accent-cyan);
+        line-height: 1;
+        margin-bottom: 0.5rem;
+    }
+    .tech-name {
+        font-size: clamp(1.1rem, 1.8vw, 1.4rem);
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+        color: var(--text-primary);
+    }
+    .tech-desc {
+        font-size: var(--small-size);
+        color: var(--text-secondary);
+        line-height: 1.6;
+    }
+
+    /* ===========================================
+       SLIDE 结尾
+       =========================================== */
+    .closing {
+        background:
+            radial-gradient(ellipse at 50% 30%, rgba(37, 99, 235, 0.3), transparent 60%),
+            linear-gradient(180deg, var(--bg-deep) 0%, #0a1a3a 100%);
+    }
+    .closing .slide-content {
+        align-items: center;
+        text-align: center;
+    }
+    .closing-vision {
+        font-family: var(--font-serif);
+        font-size: clamp(1.8rem, 4.5vw, 3.5rem);
+        font-weight: 900;
+        line-height: 1.4;
+        max-width: 18ch;
+        margin: 0 auto 2rem;
+    }
+    .closing-vision .glow {
+        background: linear-gradient(135deg, var(--accent-cyan), var(--accent-glow));
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+        position: relative;
+    }
+    .closing-thanks {
+        font-family: var(--font-en);
+        font-size: clamp(1.5rem, 3vw, 2.5rem);
+        font-weight: 300;
+        letter-spacing: 0.3em;
+        color: var(--text-secondary);
+        margin-top: 2rem;
+    }
+    .closing-divider {
+        width: 80px;
+        height: 2px;
+        background: linear-gradient(90deg, transparent, var(--accent-cyan), transparent);
+        margin: 1.5rem auto;
+    }
+    .closing-footer {
+        font-family: var(--font-mono);
+        font-size: var(--small-size);
+        color: var(--text-tertiary);
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+    }
+    </style>
+</head>
+<body>
+    <!-- 进度条 -->
+    <div class="progress-bar" id="progressBar"></div>
+
+    <!-- 右侧导航点 -->
+    <nav class="nav-dots" id="navDots" aria-label="幻灯片导航"></nav>
+
+    <!-- 键盘提示 -->
+    <div class="keyboard-hint">
+        <kbd>←</kbd><kbd>→</kbd> 翻页 · <kbd>Space</kbd> 下一页 · <kbd>1-9</kbd> 跳页 · <kbd>点击图片</kbd> 全屏
+    </div>
+
+    <!-- ==================== LIGHTBOX 全屏图片预览 ==================== -->
+    <div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-hidden="true">
+        <button class="lightbox-close" id="lightboxClose" aria-label="关闭">✕</button>
+        <div class="lightbox-stage">
+            <img id="lightboxImg" src="" alt="">
+            <div class="lightbox-caption" id="lightboxCaption"></div>
+        </div>
+        <div class="lightbox-hint">
+            点击空白处 或 <kbd>ESC</kbd> 关闭
+        </div>
+    </div>
+
+    <!-- ==================== SLIDE 1 — 封面 ==================== -->
+    <section class="slide cover" data-title="封面">
+        <div class="slide-content">
+            <div class="cover-text">
+                <div class="cover-tag reveal">
+                    简洁通用的群体智能引擎 / V1.0
+                </div>
+                <h1 class="cover-title reveal">
+                    Miro<span class="accent">Fish</span><br>
+                    群体智能<br>预测引擎
+                </h1>
+                <p class="cover-subtitle reveal">
+                    A Universal Swarm Intelligence Engine
+                </p>
+                <p class="cover-tagline reveal">
+                    上传任意报告，<span class="highlight">即刻推演未来</span>
+                </p>
+                <div class="cover-meta reveal">
+                    <div class="cover-meta-item">
+                        <span class="label">汇报主题</span>
+                        <span class="value">初级需求分析 · 答辩</span>
+                    </div>
+                    <div class="cover-meta-item">
+                        <span class="label">汇报人</span>
+                        <span class="value">_______________</span>
+                    </div>
+                    <div class="cover-meta-item">
+                        <span class="label">日期</span>
+                        <span class="value">2026 / 04 / 25</span>
+                    </div>
+                </div>
+            </div>
+            <div class="cover-visual reveal">
+                <div class="cover-orbit"></div>
+                <img src="static/image/MiroFish_logo_compressed.jpeg" alt="MiroFish Logo" class="cover-logo">
+            </div>
+        </div>
+        <div class="slide-meta">
+            <span class="brand">MIROFISH · 需求分析答辩</span>
+            <span class="pageno"><strong>01</strong> / 13</span>
+        </div>
+    </section>
+
+    <!-- ==================== SLIDE 2 — 背景痛点 ==================== -->
+    <section class="slide" data-title="背景痛点">
+        <div class="slide-content">
+            <div class="section-header reveal">
+                <span class="section-no">02 / BACKGROUND</span>
+                <h2 class="section-title">为什么需要 <span class="underline">群体智能预测</span>？</h2>
+                <p class="section-sub">传统预测的局限正在被群体涌现的力量打破。</p>
+            </div>
+            <div class="compare reveal">
+                <div class="compare-col bad">
+                    <h4>// 传统预测的困境</h4>
+                    <h3>专家拍脑袋 · 模型黑箱</h3>
+                    <ul>
+                        <li>统计模型只输出"结果"，无法展示"过程"</li>
+                        <li>群体行为高度耦合，传统建模难以刻画</li>
+                        <li>专家经验主观，假设无法低成本回测</li>
+                        <li>"上帝视角"变量注入，几乎不可能</li>
+                    </ul>
+                </div>
+                <div class="compare-vs">VS</div>
+                <div class="compare-col good">
+                    <h4>// MiroFish 的方案</h4>
+                    <h3>多 Agent · 群体涌现 · 平行世界</h3>
+                    <ul>
+                        <li>百万级智能体在数字沙盘中自由互动演化</li>
+                        <li>GraphRAG + 长期记忆，让每个 Agent 拥有"灵魂"</li>
+                        <li>自然语言注入"上帝视角"，零风险预演决策</li>
+                        <li>不仅给结论，还能复盘事件传播全过程</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="slide-meta">
+            <span class="brand">MIROFISH · 背景与痛点</span>
+            <span class="pageno"><strong>02</strong> / 13</span>
+        </div>
+    </section>
+
+    <!-- ==================== SLIDE 3 — 一句话故事 ==================== -->
+    <section class="slide" data-title="一句话故事">
+        <div class="slide-content">
+            <div class="section-header reveal" style="text-align:center; margin-bottom:1rem;">
+                <span class="section-no">03 / ONE-LINE PITCH</span>
+            </div>
+            <div class="story">
+                <p class="story-hook reveal">
+                    上传一份材料，<br>
+                    自动生成一个由数千个<span class="keyword">独立人格 AI 智能体</span><br>
+                    组成的<span class="keyword">虚拟社会</span>，<br>
+                    让他们自己互动，<span class="keyword">预测出事件走向</span>。
+                </p>
+                <div class="story-arrow reveal">▼ &nbsp; CORE&nbsp;VALUE &nbsp; ▼</div>
+                <div class="story-value reveal-stagger">
+                    <div class="value-card">
+                        <div class="num">B2B</div>
+                        <div class="label">于宏观</div>
+                        <div class="desc">决策者的预演实验室<br>政策与公关零风险试错</div>
+                    </div>
+                    <div class="value-card">
+                        <div class="num">B2C</div>
+                        <div class="label">于微观</div>
+                        <div class="desc">个人用户的创意沙盘<br>推演小说结局、探索脑洞</div>
+                    </div>
+                    <div class="value-card">
+                        <div class="num">∞</div>
+                        <div class="label">愿景</div>
+                        <div class="desc">让未来在数字沙盘中预演<br>让决策在百战模拟后胜出</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="slide-meta">
+            <span class="brand">MIROFISH · 一句话故事</span>
+            <span class="pageno"><strong>03</strong> / 13</span>
+        </div>
+    </section>
+
+    <!-- ==================== SLIDE 4 — 用例图 ==================== -->
+    <section class="slide" data-title="用例图">
+        <div class="slide-content">
+            <div class="section-header reveal">
+                <span class="section-no">04 / USE CASE DIAGRAM</span>
+                <h2 class="section-title">系统 <span class="underline">用例图</span></h2>
+            </div>
+            <div class="usecase-wrap">
+                <div class="usecase-text reveal">
+                    <h3>两类参与者，八大核心用例</h3>
+                    <p>普通用户与管理员通过 8 个核心用例与系统交互，
+                    系统通过 LLM API 与 Zep Cloud 两个外部服务协同完成预测任务。</p>
+                    <div class="usecase-legend">
+                        <div class="legend-item"><span class="legend-dot actor"></span>参与者 Actor — 用户/管理员</div>
+                        <div class="legend-item"><span class="legend-dot usecase"></span>用例 Use Case — 系统功能</div>
+                        <div class="legend-item"><span class="legend-dot ext"></span>外部系统 — LLM / Zep Cloud</div>
+                        <div class="legend-item" style="color:var(--text-tertiary); font-family:var(--font-mono); font-size:var(--label-size);">--&nbsp;include &nbsp;|&nbsp; ⇢ extend</div>
+                    </div>
+                </div>
+                <div class="usecase-img reveal">
+                    <img src="static/image/usecase.png" alt="MiroFish 系统用例图">
+                </div>
+            </div>
+        </div>
+        <div class="slide-meta">
+            <span class="brand">MIROFISH · 用例图</span>
+            <span class="pageno"><strong>04</strong> / 13</span>
+        </div>
+    </section>
+
+    <!-- ==================== SLIDE 5 — 功能需求 ==================== -->
+    <section class="slide" data-title="功能需求">
+        <div class="slide-content">
+            <div class="section-header reveal">
+                <span class="section-no">05 / FUNCTIONAL REQUIREMENTS</span>
+                <h2 class="section-title">功能需求 — <span class="underline">六字口诀</span></h2>
+                <div class="fr-mnemonic">传图 · 设人 · 跑模 · 出报 · 聊天 · 存档</div>
+            </div>
+            <div class="fr-grid reveal-stagger">
+                <div class="fr-card">
+                    <div class="fr-no">FR-01</div>
+                    <div class="fr-name">知识图谱构建</div>
+                    <div class="fr-mnem">「 传 · 图 」</div>
+                    <div class="fr-desc">用户上传 PDF / TXT / MD 种子材料，系统于 5 分钟内完成实体抽取、关系识别，生成可视化知识图谱。</div>
+                </div>
+                <div class="fr-card">
+                    <div class="fr-no">FR-02</div>
+                    <div class="fr-name">数字人设生成</div>
+                    <div class="fr-mnem">「 设 · 人 」</div>
+                    <div class="fr-desc">基于群体特征自动生成具备背景、性格、记忆的虚拟智能体，规模可达 100 ~ 5000，支持预览与重生成。</div>
+                </div>
+                <div class="fr-card">
+                    <div class="fr-no">FR-03</div>
+                    <div class="fr-name">双平台并行仿真</div>
+                    <div class="fr-mnem">「 跑 · 模 」</div>
+                    <div class="fr-desc">支持 Twitter / Reddit 双平台行为模拟，可设置轮数并以"上帝视角"动态注入外部变量。</div>
+                </div>
+                <div class="fr-card">
+                    <div class="fr-no">FR-04</div>
+                    <div class="fr-name">预测报告生成</div>
+                    <div class="fr-mnem">「 出 · 报 」</div>
+                    <div class="fr-desc">ReportAgent 调用工具集与模拟后环境深度交互，产出结构化预测报告：趋势、关键事件、观点分布。</div>
+                </div>
+                <div class="fr-card">
+                    <div class="fr-no">FR-05</div>
+                    <div class="fr-name">深度交互对话</div>
+                    <div class="fr-mnem">「 聊 · 天 」</div>
+                    <div class="fr-desc">用户可与模拟世界中任意 Agent 自然语言对话，亦可与 ReportAgent 追问报告细节。</div>
+                </div>
+                <div class="fr-card">
+                    <div class="fr-no">FR-06</div>
+                    <div class="fr-name">历史项目管理</div>
+                    <div class="fr-mnem">「 存 · 档 」</div>
+                    <div class="fr-desc">查看、复用、删除历史项目，每个项目独立存储种子材料、图谱、人设、报告与对话。</div>
+                </div>
+            </div>
+        </div>
+        <div class="slide-meta">
+            <span class="brand">MIROFISH · 功能需求</span>
+            <span class="pageno"><strong>05</strong> / 13</span>
+        </div>
+    </section>
+
+    <!-- ==================== SLIDE 6 — 非功能需求 ==================== -->
+    <section class="slide" data-title="非功能需求">
+        <div class="slide-content">
+            <div class="section-header reveal">
+                <span class="section-no">06 / NON-FUNCTIONAL REQUIREMENTS</span>
+                <h2 class="section-title">非功能需求 — <span class="underline">六维标准</span></h2>
+                <p class="section-sub">性能 · 可用性 · 安全性 · 可扩展性 · 兼容性 · 可维护性</p>
+            </div>
+            <div class="nfr-grid reveal-stagger">
+                <div class="nfr-card">
+                    <div class="nfr-icon">P</div>
+                    <div class="nfr-name">性能 Performance</div>
+                    <div class="nfr-key">NFR-01 · LATENCY</div>
+                    <div class="nfr-desc">单次仿真 (100 Agent × 40 轮) ≤ 30 分钟；图谱构建响应 ≤ 5 分钟。</div>
+                </div>
+                <div class="nfr-card">
+                    <div class="nfr-icon">U</div>
+                    <div class="nfr-name">可用性 Usability</div>
+                    <div class="nfr-key">NFR-02 · UX</div>
+                    <div class="nfr-desc">前端 5 步引导式流程，普通用户零培训即可完成完整预测任务。</div>
+                </div>
+                <div class="nfr-card">
+                    <div class="nfr-icon">S</div>
+                    <div class="nfr-name">安全性 Security</div>
+                    <div class="nfr-key">NFR-03 · PRIVACY</div>
+                    <div class="nfr-desc">API 密钥 .env 隔离存储；用户上传材料仅本地存储，不外泄第三方。</div>
+                </div>
+                <div class="nfr-card">
+                    <div class="nfr-icon">E</div>
+                    <div class="nfr-name">可扩展性 Extensibility</div>
+                    <div class="nfr-key">NFR-04 · OPEN</div>
+                    <div class="nfr-desc">兼容任意 OpenAI SDK 格式接口（Qwen / GPT / Claude / DeepSeek），自由切换。</div>
+                </div>
+                <div class="nfr-card">
+                    <div class="nfr-icon">C</div>
+                    <div class="nfr-name">兼容性 Compatibility</div>
+                    <div class="nfr-key">NFR-05 · CROSS</div>
+                    <div class="nfr-desc">Docker 一键部署，跨 Windows / Linux / macOS 三大平台运行。</div>
+                </div>
+                <div class="nfr-card">
+                    <div class="nfr-icon">M</div>
+                    <div class="nfr-name">可维护性 Maintainability</div>
+                    <div class="nfr-key">NFR-06 · MODULAR</div>
+                    <div class="nfr-desc">前后端分离 (Vue3 + Flask)，API / Service / Model 三层模块化架构。</div>
+                </div>
+            </div>
+        </div>
+        <div class="slide-meta">
+            <span class="brand">MIROFISH · 非功能需求</span>
+            <span class="pageno"><strong>06</strong> / 13</span>
+        </div>
+    </section>
+
+    <!-- ==================== SLIDE 7 — 工作流 ==================== -->
+    <section class="slide" data-title="工作流">
+        <div class="slide-content">
+            <div class="section-header reveal">
+                <span class="section-no">07 / WORKFLOW</span>
+                <h2 class="section-title">系统工作流 — <span class="underline">五步推演</span></h2>
+            </div>
+            <div class="workflow">
+                <div class="workflow-steps reveal-stagger">
+                    <div class="wf-step">
+                        <div class="wf-num">1</div>
+                        <div class="wf-text">
+                            <div class="wf-name">图谱构建</div>
+                            <div class="wf-desc">现实种子提取 · 个体与群体记忆注入 · GraphRAG 构建</div>
+                        </div>
+                    </div>
+                    <div class="wf-step">
+                        <div class="wf-num">2</div>
+                        <div class="wf-text">
+                            <div class="wf-name">环境搭建</div>
+                            <div class="wf-desc">实体关系抽取 · 人设生成 · 环境配置 Agent 注入仿真参数</div>
+                        </div>
+                    </div>
+                    <div class="wf-step">
+                        <div class="wf-num">3</div>
+                        <div class="wf-text">
+                            <div class="wf-name">开始模拟</div>
+                            <div class="wf-desc">双平台并行模拟 · 自动解析预测需求 · 动态更新时序记忆</div>
+                        </div>
+                    </div>
+                    <div class="wf-step">
+                        <div class="wf-num">4</div>
+                        <div class="wf-text">
+                            <div class="wf-name">报告生成</div>
+                            <div class="wf-desc">ReportAgent 拥有丰富工具集，与模拟后环境进行深度交互</div>
+                        </div>
+                    </div>
+                    <div class="wf-step">
+                        <div class="wf-num">5</div>
+                        <div class="wf-text">
+                            <div class="wf-name">深度互动</div>
+                            <div class="wf-desc">与模拟世界中任意一位对话 · 与 ReportAgent 对话</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="wf-img reveal">
+                    <img src="static/image/Screenshot/运行截图1.png" alt="MiroFish 首页与工作流">
+                </div>
+            </div>
+        </div>
+        <div class="slide-meta">
+            <span class="brand">MIROFISH · 工作流</span>
+            <span class="pageno"><strong>07</strong> / 13</span>
+        </div>
+    </section>
+
+    <!-- ==================== SLIDE 8 — 知识图谱展示 ==================== -->
+    <section class="slide" data-title="知识图谱">
+        <div class="slide-content">
+            <div class="section-header reveal">
+                <span class="section-no">08 / KNOWLEDGE GRAPH</span>
+                <h2 class="section-title">知识图谱 · <span class="underline">从种子到平行世界的入口</span></h2>
+            </div>
+            <div class="showcase">
+                <div class="showcase-text reveal">
+                    <h3>百万级实体关系，可视化呈现</h3>
+                    <p>从一段文字、一份报告出发，MiroFish 自动构建包含人物、事件、机构、观点的多层知识图谱，
+                    为后续 Agent 人设生成提供"世界观"基底。</p>
+                    <ul>
+                        <li>支持 PDF / Markdown / 纯文本多格式输入</li>
+                        <li>实体-关系-属性三元组自动抽取</li>
+                        <li>节点详情面板可查看属性、关联与摘要</li>
+                        <li>支持图谱级别过滤、关系权重调整</li>
+                    </ul>
+                </div>
+                <div class="dual-img reveal">
+                    <div><img src="static/image/Screenshot/运行截图6.png" alt="大规模图谱可视化"></div>
+                    <div><img src="static/image/Screenshot/运行截图2.png" alt="节点详情面板"></div>
+                </div>
+            </div>
+        </div>
+        <div class="slide-meta">
+            <span class="brand">MIROFISH · 知识图谱</span>
+            <span class="pageno"><strong>08</strong> / 13</span>
+        </div>
+    </section>
+
+    <!-- ==================== SLIDE 9 — 报告生成 ==================== -->
+    <section class="slide" data-title="报告生成">
+        <div class="slide-content">
+            <div class="section-header reveal">
+                <span class="section-no">09 / REPORT GENERATION</span>
+                <h2 class="section-title">预测报告 · <span class="underline">ReportAgent 自主写作</span></h2>
+            </div>
+            <div class="showcase reverse">
+                <div class="showcase-img reveal">
+                    <img src="static/image/Screenshot/运行截图4.png" alt="预测报告生成页">
+                </div>
+                <div class="showcase-text reveal">
+                    <h3>从大纲规划到分章撰写，全程自治</h3>
+                    <p>仿真结束后，ReportAgent 自动调用 14 项工具与模拟后环境深度交互，
+                    完成大纲规划、分章节撰写、实时控制台输出。</p>
+                    <ul>
+                        <li>自动生成结构化大纲（4 ~ 6 章节）</li>
+                        <li>每章独立调用工具检索仿真数据</li>
+                        <li>支持长达 23 分钟的深度推理生成</li>
+                        <li>章节可点击溯源，结果可信可追溯</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="slide-meta">
+            <span class="brand">MIROFISH · 报告生成</span>
+            <span class="pageno"><strong>09</strong> / 13</span>
+        </div>
+    </section>
+
+    <!-- ==================== SLIDE 10 — 深度互动 ==================== -->
+    <section class="slide" data-title="深度互动">
+        <div class="slide-content">
+            <div class="section-header reveal">
+                <span class="section-no">10 / DEEP INTERACTION</span>
+                <h2 class="section-title">深度互动 · <span class="underline">与平行世界对话</span></h2>
+            </div>
+            <div class="showcase">
+                <div class="showcase-text reveal">
+                    <h3>4 项专业工具 + 任意 Agent 对话</h3>
+                    <p>用户可在生成报告后随时进入互动环节：与 ReportAgent 对话追问，
+                    或直接采访模拟世界中的任意一个智能体。</p>
+                    <ul>
+                        <li><strong>InsightForge</strong> 深度归因 — 跨时空因果分析</li>
+                        <li><strong>PanoramaSearch</strong> 全景追踪 — 事件传播路径</li>
+                        <li><strong>QuickSearch</strong> 快速检索 — 节点属性查询</li>
+                        <li><strong>InterviewSubAgent</strong> 虚拟访谈 — 多轮对话采集观点</li>
+                    </ul>
+                </div>
+                <div class="showcase-img reveal">
+                    <img src="static/image/Screenshot/运行截图5.png" alt="深度互动与 ReportAgent 对话">
+                </div>
+            </div>
+        </div>
+        <div class="slide-meta">
+            <span class="brand">MIROFISH · 深度互动</span>
+            <span class="pageno"><strong>10</strong> / 13</span>
+        </div>
+    </section>
+
+    <!-- ==================== SLIDE 11 — 应用场景 ==================== -->
+    <section class="slide" data-title="应用场景">
+        <div class="slide-content">
+            <div class="section-header reveal">
+                <span class="section-no">11 / SCENARIOS</span>
+                <h2 class="section-title">应用场景 — <span class="underline">从严肃预测到趣味仿真</span></h2>
+            </div>
+            <div class="scenario reveal-stagger">
+                <div class="scn-card">
+                    <div class="scn-img" style="background-image:url('static/image/武大模拟演示封面.png');"></div>
+                    <div class="scn-body">
+                        <span class="scn-tag">CASE 01</span>
+                        <div class="scn-name">舆情推演</div>
+                        <div class="scn-desc">武汉大学舆情事件全景预测，已完成 5/5 阶段深度互动验证。</div>
+                    </div>
+                </div>
+                <div class="scn-card">
+                    <div class="scn-img placeholder"><span>$</span></div>
+                    <div class="scn-body">
+                        <span class="scn-tag">CASE 02</span>
+                        <div class="scn-name">金融预测</div>
+                        <div class="scn-desc">摩尔线程大规模融资后的战略演进与市场影响预测报告。</div>
+                    </div>
+                </div>
+                <div class="scn-card">
+                    <div class="scn-img placeholder" style="background:linear-gradient(135deg,#312e81,#1e40af);"><span>政</span></div>
+                    <div class="scn-body">
+                        <span class="scn-tag">CASE 03</span>
+                        <div class="scn-name">政策评估</div>
+                        <div class="scn-desc">政策草案落地前的零风险预演，量化舆论与决策反馈。</div>
+                    </div>
+                </div>
+                <div class="scn-card">
+                    <div class="scn-img" style="background-image:url('static/image/红楼梦模拟推演封面.jpg');"></div>
+                    <div class="scn-body">
+                        <span class="scn-tag">CASE 04</span>
+                        <div class="scn-name">文学续写</div>
+                        <div class="scn-desc">《红楼梦》前 80 回数十万字驱动，深度推演失传后 40 回结局。</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="slide-meta">
+            <span class="brand">MIROFISH · 应用场景</span>
+            <span class="pageno"><strong>11</strong> / 13</span>
+        </div>
+    </section>
+
+    <!-- ==================== SLIDE 12 — 技术亮点 ==================== -->
+    <section class="slide" data-title="技术亮点">
+        <div class="slide-content">
+            <div class="section-header reveal">
+                <span class="section-no">12 / TECHNICAL HIGHLIGHTS</span>
+                <h2 class="section-title">技术亮点 — <span class="underline">为什么是我们</span></h2>
+            </div>
+            <div class="tech reveal-stagger">
+                <div class="tech-card">
+                    <div class="tech-num">01</div>
+                    <div class="tech-name">多 Agent 群体涌现</div>
+                    <div class="tech-desc">基于 OASIS 仿真引擎，最高支持百万级 Agent 同时演化，捕捉传统模型无法刻画的群体涌现现象。</div>
+                </div>
+                <div class="tech-card">
+                    <div class="tech-num">02</div>
+                    <div class="tech-name">GraphRAG + Zep 长期记忆</div>
+                    <div class="tech-desc">知识图谱保证上下文准确，Zep Cloud 提供时序记忆，让每个 Agent 拥有"长期人格"，避免胡说八道。</div>
+                </div>
+                <div class="tech-card">
+                    <div class="tech-num">03</div>
+                    <div class="tech-name">双平台并行仿真</div>
+                    <div class="tech-desc">Twitter / Reddit 双行为模式同时跑，互相印证；上帝视角随时注入外部变量，零风险预演决策。</div>
+                </div>
+                <div class="tech-card">
+                    <div class="tech-num">04</div>
+                    <div class="tech-name">ReportAgent 工具集</div>
+                    <div class="tech-desc">14 项专业工具自治撰写报告，4 项交互工具支持深度归因、全景追踪、虚拟访谈、快速检索。</div>
+                </div>
+            </div>
+        </div>
+        <div class="slide-meta">
+            <span class="brand">MIROFISH · 技术亮点</span>
+            <span class="pageno"><strong>12</strong> / 13</span>
+        </div>
+    </section>
+
+    <!-- ==================== SLIDE 13 — 结尾愿景 ==================== -->
+    <section class="slide closing" data-title="谢谢">
+        <div class="slide-content">
+            <p class="closing-vision reveal">
+                让每一个<span class="glow">"如果"</span><br>
+                都能<span class="glow">看见结果</span>。
+            </p>
+            <div class="closing-divider reveal"></div>
+            <p class="closing-thanks reveal">THANK&nbsp;YOU</p>
+            <p class="closing-footer reveal" style="margin-top:1.5rem;">
+                MiroFish · Predicting&nbsp;Anything · 2026
+            </p>
+        </div>
+        <div class="slide-meta">
+            <span class="brand">MIROFISH · END</span>
+            <span class="pageno"><strong>13</strong> / 13</span>
+        </div>
+    </section>
+
+    <script>
+    /* ===========================================
+       SLIDE PRESENTATION CONTROLLER
+       =========================================== */
+    class SlidePresentation {
+        constructor() {
+            this.slides = Array.from(document.querySelectorAll('.slide'));
+            this.total  = this.slides.length;
+            this.current = 0;
+            this.progressBar = document.getElementById('progressBar');
+            this.navContainer = document.getElementById('navDots');
+
+            this.buildNavDots();
+            this.observe();
+            this.bindKeys();
+            this.bindTouch();
+            this.bindScroll();
+            this.update(0);
+            this.setupLightbox();
+        }
+
+        /* === LIGHTBOX 图片点击全屏 === */
+        setupLightbox() {
+            this.lightbox = document.getElementById('lightbox');
+            this.lbImg    = document.getElementById('lightboxImg');
+            this.lbCap    = document.getElementById('lightboxCaption');
+            const closeBtn = document.getElementById('lightboxClose');
+
+            // 给所有 slide 内的 img 绑定点击放大（除了 logo 自带动画就不挂了）
+            document.querySelectorAll('.slide img').forEach(img => {
+                img.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    this.openLightbox(img);
+                });
+            });
+
+            // 关闭：点空白 / 关闭按钮 / ESC
+            this.lightbox.addEventListener('click', (e) => {
+                if (e.target === this.lightbox) this.closeLightbox();
+            });
+            closeBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.closeLightbox();
+            });
+            // 防止点到图片本身关闭
+            this.lbImg.addEventListener('click', (e) => e.stopPropagation());
+        }
+
+        openLightbox(img) {
+            this.lbImg.src = img.src;
+            this.lbImg.alt = img.alt || '';
+            this.lbCap.textContent = img.alt || '';
+            this.lightbox.classList.add('active');
+            this.lightbox.setAttribute('aria-hidden', 'false');
+            document.body.classList.add('lightbox-open');
+        }
+
+        closeLightbox() {
+            this.lightbox.classList.remove('active');
+            this.lightbox.setAttribute('aria-hidden', 'true');
+            document.body.classList.remove('lightbox-open');
+        }
+
+        isLightboxOpen() {
+            return this.lightbox && this.lightbox.classList.contains('active');
+        }
+
+        buildNavDots() {
+            this.slides.forEach((s, i) => {
+                const dot = document.createElement('button');
+                dot.className = 'nav-dot';
+                dot.setAttribute('aria-label', `第 ${i+1} 页：${s.dataset.title || ''}`);
+                dot.addEventListener('click', () => this.goto(i));
+                this.navContainer.appendChild(dot);
+            });
+        }
+
+        observe() {
+            // IntersectionObserver — slide 进入视口时触发动画
+            const io = new IntersectionObserver((entries) => {
+                entries.forEach(e => {
+                    if (e.isIntersecting && e.intersectionRatio >= 0.55) {
+                        e.target.classList.add('visible');
+                        const idx = this.slides.indexOf(e.target);
+                        if (idx !== -1) this.update(idx);
+                    }
+                });
+            }, { threshold: [0.55] });
+            this.slides.forEach(s => io.observe(s));
+        }
+
+        update(idx) {
+            this.current = idx;
+            const pct = ((idx + 1) / this.total) * 100;
+            this.progressBar.style.width = pct + '%';
+            this.navContainer.querySelectorAll('.nav-dot').forEach((d, i) => {
+                d.classList.toggle('active', i === idx);
+            });
+        }
+
+        goto(idx) {
+            idx = Math.max(0, Math.min(this.total - 1, idx));
+            this.slides[idx].scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        next() { this.goto(this.current + 1); }
+        prev() { this.goto(this.current - 1); }
+
+        bindKeys() {
+            document.addEventListener('keydown', (e) => {
+                // ESC 优先关闭 lightbox
+                if (e.key === 'Escape' && this.isLightboxOpen()) {
+                    e.preventDefault();
+                    this.closeLightbox();
+                    return;
+                }
+                // lightbox 打开时屏蔽翻页快捷键
+                if (this.isLightboxOpen()) return;
+
+                // 数字键 1-9 直接跳页
+                if (/^[1-9]$/.test(e.key)) {
+                    const target = parseInt(e.key, 10) - 1;
+                    if (target < this.total) this.goto(target);
+                    return;
+                }
+                if (e.key === '0' && this.total >= 10) { this.goto(9); return; }
+
+                switch (e.key) {
+                    case 'ArrowRight':
+                    case 'ArrowDown':
+                    case ' ':
+                    case 'PageDown':
+                        e.preventDefault();
+                        this.next();
+                        break;
+                    case 'ArrowLeft':
+                    case 'ArrowUp':
+                    case 'PageUp':
+                        e.preventDefault();
+                        this.prev();
+                        break;
+                    case 'Home':
+                        e.preventDefault();
+                        this.goto(0);
+                        break;
+                    case 'End':
+                        e.preventDefault();
+                        this.goto(this.total - 1);
+                        break;
+                }
+            });
+        }
+
+        bindTouch() {
+            let startY = 0, startX = 0;
+            document.addEventListener('touchstart', (e) => {
+                startY = e.touches[0].clientY;
+                startX = e.touches[0].clientX;
+            }, { passive: true });
+            document.addEventListener('touchend', (e) => {
+                if (this.isLightboxOpen()) return;
+                const dy = e.changedTouches[0].clientY - startY;
+                const dx = e.changedTouches[0].clientX - startX;
+                if (Math.abs(dy) < 50 && Math.abs(dx) < 50) return;
+                if (Math.abs(dy) > Math.abs(dx)) {
+                    if (dy < 0) this.next(); else this.prev();
+                } else {
+                    if (dx < 0) this.next(); else this.prev();
+                }
+            }, { passive: true });
+        }
+
+        bindScroll() {
+            // 鼠标滚轮也触发翻页（与 scroll-snap 协同）
+            let lock = false;
+            window.addEventListener('wheel', (e) => {
+                if (this.isLightboxOpen()) return;
+                if (lock) return;
+                if (Math.abs(e.deltaY) < 30) return;
+                lock = true;
+                if (e.deltaY > 0) this.next(); else this.prev();
+                setTimeout(() => { lock = false; }, 700);
+            }, { passive: true });
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => new SlidePresentation());
+    </script>
+</body>
+</html>

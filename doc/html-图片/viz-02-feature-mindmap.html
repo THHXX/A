@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>MiroFish · 功能用例思维导图</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+    color: #fff;
+    min-height: 100vh;
+    padding: 24px;
+    overflow-x: auto;
+  }
+  .header {
+    text-align: center;
+    margin-bottom: 24px;
+  }
+  .header h1 {
+    font-size: 28px;
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 50%, #4facfe 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 6px;
+  }
+  .header p { color: #a8b1d4; font-size: 13px; letter-spacing: 1px; }
+
+  .mindmap {
+    max-width: 1600px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1fr 280px 1fr;
+    gap: 32px;
+    align-items: center;
+    min-height: 800px;
+  }
+
+  .center-node {
+    text-align: center;
+    background: radial-gradient(circle, #f5576c 0%, #a83248 100%);
+    color: #fff;
+    padding: 32px 20px;
+    border-radius: 50%;
+    aspect-ratio: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0 0 60px rgba(245,87,108,0.5), inset 0 0 30px rgba(255,255,255,0.1);
+    position: relative;
+    animation: corePulse 3s ease-in-out infinite;
+  }
+  @keyframes corePulse {
+    0%,100% { box-shadow: 0 0 60px rgba(245,87,108,0.5), inset 0 0 30px rgba(255,255,255,0.1); }
+    50% { box-shadow: 0 0 100px rgba(245,87,108,0.8), inset 0 0 40px rgba(255,255,255,0.2); }
+  }
+  .center-node h2 {
+    font-size: 26px;
+    font-weight: 800;
+    margin-bottom: 4px;
+  }
+  .center-node .sub {
+    font-size: 11px;
+    opacity: 0.85;
+    letter-spacing: 2px;
+  }
+  .center-node .tag {
+    margin-top: 10px;
+    padding: 4px 12px;
+    background: rgba(0,0,0,0.3);
+    border-radius: 12px;
+    font-size: 11px;
+  }
+
+  /* Branches */
+  .branch-group {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .branch-group.left { align-items: flex-end; }
+  .branch-group.right { align-items: flex-start; }
+
+  .branch {
+    background: linear-gradient(135deg, rgba(79,172,254,0.15), rgba(0,242,254,0.05));
+    border: 1px solid rgba(79,172,254,0.3);
+    border-radius: 14px;
+    padding: 14px 18px;
+    width: 100%;
+    max-width: 480px;
+    transition: all .3s;
+    position: relative;
+  }
+  .branch:hover {
+    transform: scale(1.02);
+    border-color: rgba(79,172,254,0.7);
+    box-shadow: 0 8px 24px rgba(79,172,254,0.2);
+  }
+  .branch.nfr {
+    background: linear-gradient(135deg, rgba(240,147,251,0.15), rgba(245,87,108,0.05));
+    border-color: rgba(240,147,251,0.3);
+  }
+  .branch.nfr:hover {
+    border-color: rgba(240,147,251,0.7);
+    box-shadow: 0 8px 24px rgba(240,147,251,0.2);
+  }
+  .b-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+  }
+  .b-icon {
+    width: 36px; height: 36px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #4facfe, #00f2fe);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+  .branch.nfr .b-icon { background: linear-gradient(135deg, #f093fb, #f5576c); }
+  .b-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: #fff;
+  }
+  .b-code {
+    font-size: 11px;
+    color: #00f2fe;
+    font-family: 'Consolas', monospace;
+    margin-left: auto;
+    background: rgba(0,242,254,0.1);
+    padding: 2px 8px;
+    border-radius: 6px;
+  }
+  .branch.nfr .b-code { color: #f093fb; background: rgba(240,147,251,0.1); }
+  .b-content {
+    font-size: 12px;
+    color: #c8d0e8;
+    line-height: 1.6;
+    padding-left: 46px;
+  }
+  .b-tags {
+    margin-top: 8px;
+    padding-left: 46px;
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .mini-tag {
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 8px;
+    background: rgba(255,255,255,0.06);
+    color: #a8b1d4;
+    border: 1px solid rgba(255,255,255,0.1);
+  }
+  .mini-tag.hot { color: #ffd700; border-color: rgba(255,215,0,0.3); background: rgba(255,215,0,0.08); }
+
+  .section-label {
+    text-align: center;
+    font-size: 12px;
+    color: #4facfe;
+    letter-spacing: 3px;
+    margin-bottom: 10px;
+    text-transform: uppercase;
+  }
+  .section-label.nfr { color: #f093fb; }
+
+  /* SVG connection lines */
+  .connections {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .legend {
+    max-width: 1600px;
+    margin: 30px auto 0;
+    background: rgba(0,0,0,0.3);
+    border-radius: 12px;
+    padding: 14px 20px;
+    display: flex;
+    justify-content: space-around;
+    flex-wrap: wrap;
+    gap: 12px;
+    font-size: 12px;
+    color: #c8d0e8;
+  }
+  .legend-item { display: flex; align-items: center; gap: 6px; }
+  .swatch { width: 14px; height: 14px; border-radius: 4px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>MiroFish 功能与质量需求 · 思维导图</h1>
+  <p>6 大功能模块（FR）　×　8 个核心用例（UC）　×　6 项非功能需求（NFR）</p>
+</div>
+
+<div class="mindmap">
+
+  <!-- LEFT: Functional Requirements -->
+  <div>
+    <div class="section-label">▎ 功能需求 FR · 十二字口诀</div>
+    <div class="branch-group left">
+
+      <div class="branch">
+        <div class="b-head">
+          <div class="b-icon">📤</div>
+          <div class="b-title">传图 · 知识图谱构建</div>
+          <div class="b-code">FR-01</div>
+        </div>
+        <div class="b-content">上传 PDF / TXT / MD，自动抽取实体关系，生成可视化图谱</div>
+        <div class="b-tags">
+          <span class="mini-tag">UC1 上传种子</span>
+          <span class="mini-tag">UC2 构建图谱</span>
+          <span class="mini-tag hot">≤ 5 分钟</span>
+        </div>
+      </div>
+
+      <div class="branch">
+        <div class="b-head">
+          <div class="b-icon">👥</div>
+          <div class="b-title">设人 · 数字人设生成</div>
+          <div class="b-code">FR-02</div>
+        </div>
+        <div class="b-content">基于图谱生成具备独立人格、记忆、行为逻辑的智能体</div>
+        <div class="b-tags">
+          <span class="mini-tag">UC3 生成人设</span>
+          <span class="mini-tag hot">100~5000 Agent</span>
+        </div>
+      </div>
+
+      <div class="branch">
+        <div class="b-head">
+          <div class="b-icon">🌐</div>
+          <div class="b-title">跑模 · 双平台并行仿真</div>
+          <div class="b-code">FR-03</div>
+        </div>
+        <div class="b-content">Twitter / Reddit 双平台同时仿真，支持上帝视角注入变量</div>
+        <div class="b-tags">
+          <span class="mini-tag">UC4 启动仿真</span>
+          <span class="mini-tag">UC5 注入变量</span>
+          <span class="mini-tag hot">≤ 30 分钟</span>
+        </div>
+      </div>
+
+      <div class="branch">
+        <div class="b-head">
+          <div class="b-icon">📊</div>
+          <div class="b-title">出报 · 预测报告生成</div>
+          <div class="b-code">FR-04</div>
+        </div>
+        <div class="b-content">ReportAgent 自主调用工具集，生成可溯源的多章节报告</div>
+        <div class="b-tags">
+          <span class="mini-tag">UC6 生成报告</span>
+          <span class="mini-tag hot">章节可溯源</span>
+        </div>
+      </div>
+
+      <div class="branch">
+        <div class="b-head">
+          <div class="b-icon">💬</div>
+          <div class="b-title">聊天 · 深度交互对话</div>
+          <div class="b-code">FR-05</div>
+        </div>
+        <div class="b-content">与任意 Agent 或 ReportAgent 多轮对话，归因 / 追踪 / 访谈 / 检索</div>
+        <div class="b-tags">
+          <span class="mini-tag">UC7 深度对话</span>
+          <span class="mini-tag">4 类工具</span>
+        </div>
+      </div>
+
+      <div class="branch">
+        <div class="b-head">
+          <div class="b-icon">🗂️</div>
+          <div class="b-title">存档 · 历史项目管理</div>
+          <div class="b-code">FR-06</div>
+        </div>
+        <div class="b-content">项目级别隔离存储，支持查看、复用、删除（二次确认）</div>
+        <div class="b-tags">
+          <span class="mini-tag">UC8 项目管理</span>
+          <span class="mini-tag hot">本地隔离</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- CENTER: Core -->
+  <div style="display:flex; align-items:center; justify-content:center; height:100%;">
+    <div class="center-node">
+      <h2>MiroFish</h2>
+      <div class="sub">SWARM ENGINE</div>
+      <div class="tag">群体智能预测引擎</div>
+    </div>
+  </div>
+
+  <!-- RIGHT: Non-Functional Requirements -->
+  <div>
+    <div class="section-label nfr">▎ 非功能需求 NFR · 六维质量</div>
+    <div class="branch-group right">
+
+      <div class="branch nfr">
+        <div class="b-head">
+          <div class="b-icon">⚡</div>
+          <div class="b-title">性能需求 Performance</div>
+          <div class="b-code">NFR-01</div>
+        </div>
+        <div class="b-content">图谱 ≤ 5min · 仿真 ≤ 30min · 首屏 ≤ 3s</div>
+      </div>
+
+      <div class="branch nfr">
+        <div class="b-head">
+          <div class="b-icon">🎯</div>
+          <div class="b-title">可用性 Usability</div>
+          <div class="b-code">NFR-02</div>
+        </div>
+        <div class="b-content">五步引导式流程 · 无培训完成全流程 · 即时反馈与撤销</div>
+      </div>
+
+      <div class="branch nfr">
+        <div class="b-head">
+          <div class="b-icon">🔒</div>
+          <div class="b-title">安全性 Security</div>
+          <div class="b-code">NFR-03</div>
+        </div>
+        <div class="b-content">.env 本地隔离密钥 · 种子材料不外发 · 接口鉴权与限流</div>
+      </div>
+
+      <div class="branch nfr">
+        <div class="b-head">
+          <div class="b-icon">🔌</div>
+          <div class="b-title">可扩展性 Extensibility</div>
+          <div class="b-code">NFR-04</div>
+        </div>
+        <div class="b-content">兼容 OpenAI SDK 规范 · 平台 / 工具集热插拔</div>
+      </div>
+
+      <div class="branch nfr">
+        <div class="b-head">
+          <div class="b-icon">🌍</div>
+          <div class="b-title">兼容性 Compatibility</div>
+          <div class="b-code">NFR-05</div>
+        </div>
+        <div class="b-content">Docker 一键部署 · 主流浏览器 · Python 3.11~3.12</div>
+      </div>
+
+      <div class="branch nfr">
+        <div class="b-head">
+          <div class="b-icon">🛠️</div>
+          <div class="b-title">可维护性 Maintainability</div>
+          <div class="b-code">NFR-06</div>
+        </div>
+        <div class="b-content">Vue 3 + Flask 前后端分离 · API/Service/Model 三层架构</div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<div class="legend">
+  <div class="legend-item"><div class="swatch" style="background:linear-gradient(135deg,#4facfe,#00f2fe)"></div>功能需求 (FR-01 ~ FR-06)</div>
+  <div class="legend-item"><div class="swatch" style="background:linear-gradient(135deg,#f093fb,#f5576c)"></div>非功能需求 (NFR-01 ~ NFR-06)</div>
+  <div class="legend-item"><div class="swatch" style="background:rgba(255,215,0,0.3); border:1px solid rgba(255,215,0,0.5)"></div>关键约束指标</div>
+  <div class="legend-item">📌 共 8 个用例 UC1~UC8 关联到对应功能模块</div>
+</div>
+
+</body>
+</html>

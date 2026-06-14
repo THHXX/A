@@ -1,0 +1,88 @@
+@startuml MiroFish_UseCaseDiagram
+
+' =======================================================
+' MiroFish 多智能体仿真预测引擎 · 用例图(简版)
+' 渲染: plantuml.com / VS Code PlantUML 插件
+' =======================================================
+
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+left to right direction
+skinparam packageStyle rectangle
+skinparam defaultFontSize 13
+skinparam ArrowFontSize 11
+
+skinparam usecase {
+  BackgroundColor #FFF8E7
+  BorderColor #B8860B
+  ArrowColor #555555
+  FontColor #222222
+}
+skinparam actor {
+  BackgroundColor #E8F4F8
+  BorderColor #2C5F7C
+}
+skinparam package {
+  BackgroundColor #F8F8F8
+  BorderColor #888888
+  FontStyle bold
+  FontColor #333333
+}
+
+' ============ 参与者 ============
+actor "用户" as User
+actor "LLM 服务" as LLM
+actor "Zep 图谱" as Zep
+
+' ============ 系统边界 ============
+rectangle "**MiroFish 群体智能预测引擎**" {
+
+  usecase "创建项目"       as UC_create
+  usecase "管理项目"       as UC_manage
+  usecase "构建知识图谱"   as UC_buildGraph
+  usecase "生成本体定义"   as UC_genOnto
+  usecase "生成 Agent 人设" as UC_genProfile
+  usecase "生成模拟配置"   as UC_genConfig
+  usecase "启动并监控模拟" as UC_runSim
+  usecase "生成并查看报告" as UC_report
+  usecase "采访 Agent"     as UC_interview
+  usecase "与报告对话"     as UC_chat
+}
+
+' ============ 用户发起 ============
+User --> UC_create
+User --> UC_manage
+User --> UC_buildGraph
+User --> UC_genConfig
+User --> UC_runSim
+User --> UC_report
+User --> UC_interview
+User --> UC_chat
+
+' ============ 外部服务被调用 ============
+UC_genOnto    <-- LLM
+UC_genProfile <-- LLM
+UC_report     <-- LLM
+UC_interview  <-- LLM
+UC_chat       <-- LLM
+
+UC_buildGraph <-- Zep
+UC_genProfile <-- Zep
+
+' =================================================================
+' <<include>> —— 主流水线必经子流程
+' =================================================================
+UC_buildGraph ..> UC_genOnto    : <<include>>
+UC_genProfile ..> UC_buildGraph : <<include>>
+UC_genConfig  ..> UC_genProfile : <<include>>
+UC_runSim     ..> UC_genConfig  : <<include>>
+UC_report     ..> UC_runSim     : <<include>>
+
+' =================================================================
+' <<extend>> —— 可选 / 条件触发
+' =================================================================
+UC_manage    ..> UC_create : <<extend>>\n[项目已存在]
+UC_interview ..> UC_runSim : <<extend>>\n[需要采访某个 Agent]
+UC_chat      ..> UC_report : <<extend>>\n[想交互式探索报告]
+
+@enduml

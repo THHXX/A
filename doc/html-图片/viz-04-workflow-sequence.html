@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>MiroFish · 五步工作流序列图</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+    background: linear-gradient(180deg, #0a0e27 0%, #050816 100%);
+    color: #e8ecff;
+    min-height: 100vh;
+    padding: 28px 20px;
+  }
+  .header { text-align: center; margin-bottom: 28px; }
+  .header h1 {
+    font-size: 28px;
+    background: linear-gradient(135deg, #4facfe 0%, #43e97b 50%, #ffd200 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 6px;
+  }
+  .header p { color: #8a93b8; font-size: 13px; letter-spacing: 1px; }
+
+  .swimlane {
+    max-width: 1700px;
+    margin: 0 auto;
+    background: rgba(255,255,255,0.02);
+    border-radius: 16px;
+    padding: 24px;
+    border: 1px solid rgba(255,255,255,0.06);
+  }
+
+  .lane-header {
+    display: grid;
+    grid-template-columns: 140px repeat(5, 1fr);
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+  .lane-title {
+    text-align: center;
+    padding: 12px 8px;
+    border-radius: 10px;
+    font-weight: 700;
+    font-size: 13px;
+  }
+  .lane-title.actor { background: linear-gradient(135deg, #4facfe, #00f2fe); color: #fff; }
+  .lane-title.step1 { background: linear-gradient(135deg, #4facfe, #6a82fb); color: #fff; }
+  .lane-title.step2 { background: linear-gradient(135deg, #43e97b, #38f9d7); color: #0a0e27; }
+  .lane-title.step3 { background: linear-gradient(135deg, #fa709a, #fee140); color: #0a0e27; }
+  .lane-title.step4 { background: linear-gradient(135deg, #f093fb, #f5576c); color: #fff; }
+  .lane-title.step5 { background: linear-gradient(135deg, #ffd200, #f7971e); color: #0a0e27; }
+  .lane-title small {
+    display: block;
+    font-size: 10px;
+    font-weight: 400;
+    margin-top: 2px;
+    opacity: 0.85;
+  }
+
+  .lane-row {
+    display: grid;
+    grid-template-columns: 140px repeat(5, 1fr);
+    gap: 8px;
+    align-items: stretch;
+    margin-bottom: 12px;
+  }
+
+  .actor-cell {
+    background: rgba(79,172,254,0.1);
+    border-left: 3px solid #4facfe;
+    border-radius: 8px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+  }
+  .actor-cell .ico { font-size: 28px; margin-bottom: 4px; }
+  .actor-cell .name { font-size: 12px; font-weight: 600; color: #fff; }
+  .actor-cell .role { font-size: 10px; color: #a8b1d4; margin-top: 2px; }
+
+  .step-cell {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 8px;
+    padding: 12px;
+    font-size: 11px;
+    line-height: 1.5;
+    position: relative;
+    transition: all .25s;
+  }
+  .step-cell:hover {
+    background: rgba(255,255,255,0.06);
+    border-color: rgba(79,172,254,0.4);
+    transform: translateY(-2px);
+  }
+  .step-cell.empty {
+    background: transparent;
+    border: 1px dashed rgba(255,255,255,0.05);
+    opacity: 0.3;
+  }
+  .step-cell .action {
+    color: #4facfe;
+    font-weight: 600;
+    font-size: 11px;
+    margin-bottom: 4px;
+  }
+  .step-cell .desc {
+    color: #c8d0e8;
+    font-size: 11px;
+  }
+  .step-cell .meta {
+    margin-top: 6px;
+    padding-top: 6px;
+    border-top: 1px dashed rgba(255,255,255,0.08);
+    font-size: 10px;
+    color: #8a93b8;
+  }
+  .step-cell .meta .lbl { color: #ffd200; font-weight: 600; }
+
+  /* Decision diamond */
+  .decision {
+    background: linear-gradient(135deg, rgba(255,210,0,0.15), rgba(247,151,30,0.1));
+    border-color: rgba(255,210,0,0.4);
+  }
+  .decision .action { color: #ffd200; }
+  .decision::before {
+    content: '◆';
+    position: absolute;
+    top: 8px; right: 10px;
+    color: #ffd200;
+    font-size: 12px;
+  }
+
+  .constraint {
+    background: linear-gradient(135deg, rgba(245,87,108,0.15), rgba(240,147,251,0.1));
+    border-color: rgba(245,87,108,0.4);
+  }
+  .constraint::before {
+    content: '⏱';
+    position: absolute;
+    top: 8px; right: 10px;
+    color: #f5576c;
+    font-size: 13px;
+  }
+
+  /* Timeline arrow */
+  .timeline-arrow {
+    margin: 18px 140px 0 140px;
+    height: 4px;
+    background: linear-gradient(90deg, #4facfe, #43e97b, #fa709a, #f093fb, #ffd200);
+    border-radius: 2px;
+    position: relative;
+  }
+  .timeline-arrow::after {
+    content: '▶';
+    position: absolute;
+    right: -12px;
+    top: -8px;
+    color: #ffd200;
+    font-size: 18px;
+  }
+  .timeline-labels {
+    margin: 8px 140px 0 140px;
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 8px;
+    font-size: 11px;
+    color: #8a93b8;
+    text-align: center;
+  }
+
+  .legend {
+    max-width: 1700px;
+    margin: 24px auto 0;
+    background: rgba(255,255,255,0.02);
+    border-radius: 12px;
+    padding: 14px 20px;
+    display: flex;
+    justify-content: space-around;
+    flex-wrap: wrap;
+    gap: 12px;
+    font-size: 12px;
+    color: #c8d0e8;
+  }
+  .legend-item { display: flex; align-items: center; gap: 6px; }
+  .legend-item .swatch { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; font-size: 12px; border-radius: 4px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>MiroFish · 五步工作流序列图（带决策与时间约束）</h1>
+  <p>End-to-End Workflow with Decision Branches &amp; Time Constraints</p>
+</div>
+
+<div class="swimlane">
+
+  <!-- Header Row: 5 Steps -->
+  <div class="lane-header">
+    <div class="lane-title actor">▼ 参与者</div>
+    <div class="lane-title step1">第 1 步 · 图谱构建<small>FR-01 传图</small></div>
+    <div class="lane-title step2">第 2 步 · 环境搭建<small>FR-02 设人</small></div>
+    <div class="lane-title step3">第 3 步 · 开始模拟<small>FR-03 跑模</small></div>
+    <div class="lane-title step4">第 4 步 · 报告生成<small>FR-04 出报</small></div>
+    <div class="lane-title step5">第 5 步 · 深度互动<small>FR-05 聊天</small></div>
+  </div>
+
+  <!-- Row: User -->
+  <div class="lane-row">
+    <div class="actor-cell">
+      <div class="ico">👤</div>
+      <div class="name">普通用户</div>
+      <div class="role">END USER</div>
+    </div>
+    <div class="step-cell">
+      <div class="action">① 上传种子材料</div>
+      <div class="desc">PDF / TXT / MD 文件 + 自然语言预测需求</div>
+    </div>
+    <div class="step-cell">
+      <div class="action">④ 配置仿真规模</div>
+      <div class="desc">指定 Agent 数量（100~5000）、预览 / 编辑人设</div>
+    </div>
+    <div class="step-cell decision">
+      <div class="action">⑥ 是否注入变量？</div>
+      <div class="desc">上帝视角动态注入新事件 / 调整外部变量</div>
+    </div>
+    <div class="step-cell">
+      <div class="action">⑨ 接收预测报告</div>
+      <div class="desc">浏览多章节报告 · 点击章节溯源原始数据</div>
+    </div>
+    <div class="step-cell">
+      <div class="action">⑪ 发起多轮对话</div>
+      <div class="desc">提问任意 Agent 或 ReportAgent · 深度归因</div>
+    </div>
+  </div>
+
+  <!-- Row: Frontend -->
+  <div class="lane-row">
+    <div class="actor-cell">
+      <div class="ico">🖥️</div>
+      <div class="name">前端 (Vue3)</div>
+      <div class="role">UI Layer</div>
+    </div>
+    <div class="step-cell">
+      <div class="action">② 实时进度反馈</div>
+      <div class="desc">展示解析进度条 · 错误提示 · 可撤销</div>
+    </div>
+    <div class="step-cell">
+      <div class="action">⑤ 渲染人设列表</div>
+      <div class="desc">可视化人设属性、关系网络与初始记忆</div>
+    </div>
+    <div class="step-cell">
+      <div class="action">⑦ 实时状态可视化</div>
+      <div class="desc">展示交互日志、时序事件流</div>
+    </div>
+    <div class="step-cell">
+      <div class="action">⑩ 报告分章渲染</div>
+      <div class="desc">趋势 · 关键事件 · 群体观点分布</div>
+    </div>
+    <div class="step-cell">
+      <div class="action">⑫ 实时对话流</div>
+      <div class="desc">归因 · 追踪 · 访谈 · 检索 四类工具</div>
+    </div>
+  </div>
+
+  <!-- Row: Backend -->
+  <div class="lane-row">
+    <div class="actor-cell">
+      <div class="ico">⚙️</div>
+      <div class="name">后端 (Flask)</div>
+      <div class="role">Service Layer</div>
+    </div>
+    <div class="step-cell">
+      <div class="action">③ GraphRAG 抽取</div>
+      <div class="desc">实体 / 关系 / 属性归并 · 生成知识图谱</div>
+    </div>
+    <div class="step-cell">
+      <div class="action">配置 Agent 注入</div>
+      <div class="desc">环境配置 Agent 解析图谱 → OASIS 兼容人设</div>
+    </div>
+    <div class="step-cell">
+      <div class="action">⑧ 调度多 Agent 并发</div>
+      <div class="desc">Twitter / Reddit 双平台并行执行决策与演化</div>
+    </div>
+    <div class="step-cell">
+      <div class="action">ReportAgent 自主撰写</div>
+      <div class="desc">规划大纲 · 调用工具集 · 章节级数据溯源</div>
+    </div>
+    <div class="step-cell">
+      <div class="action">上下文一致性维护</div>
+      <div class="desc">保持会话内记忆一致 · 调用 Zep 长期记忆</div>
+    </div>
+  </div>
+
+  <!-- Row: External -->
+  <div class="lane-row">
+    <div class="actor-cell">
+      <div class="ico">🌐</div>
+      <div class="name">外部服务</div>
+      <div class="role">LLM · Zep</div>
+    </div>
+    <div class="step-cell">
+      <div class="action">LLM 文本解析</div>
+      <div class="desc">调用 OpenAI 兼容接口完成 NLP 推理</div>
+    </div>
+    <div class="step-cell">
+      <div class="action">LLM 人设生成</div>
+      <div class="desc">基于图谱群体特征生成多样化人格</div>
+    </div>
+    <div class="step-cell">
+      <div class="action">Zep 时序记忆</div>
+      <div class="desc">动态更新 Agent 长期 / 短期记忆</div>
+    </div>
+    <div class="step-cell">
+      <div class="action">LLM 报告撰写</div>
+      <div class="desc">驱动工具调用 · 生成结构化文本</div>
+    </div>
+    <div class="step-cell">
+      <div class="action">LLM 对话推理</div>
+      <div class="desc">基于上下文 + 图谱信息生成应答</div>
+    </div>
+  </div>
+
+  <!-- Row: Constraints -->
+  <div class="lane-row">
+    <div class="actor-cell" style="background:rgba(245,87,108,0.1); border-left-color:#f5576c;">
+      <div class="ico">⏱️</div>
+      <div class="name">时间约束</div>
+      <div class="role">NFR-01 性能</div>
+    </div>
+    <div class="step-cell constraint">
+      <div class="action">≤ 5 分钟</div>
+      <div class="desc">单文件 ≤ 5 万字</div>
+      <div class="meta"><span class="lbl">FR-01:</span> 图谱构建响应</div>
+    </div>
+    <div class="step-cell constraint">
+      <div class="action">实时反馈</div>
+      <div class="desc">人设生成保证多样性与一致性</div>
+      <div class="meta"><span class="lbl">FR-02:</span> 避免群体属性集中</div>
+    </div>
+    <div class="step-cell constraint">
+      <div class="action">≤ 30 分钟</div>
+      <div class="desc">100 Agent × 40 轮</div>
+      <div class="meta"><span class="lbl">FR-03:</span> 单次仿真总耗时</div>
+    </div>
+    <div class="step-cell constraint">
+      <div class="action">章节可溯源</div>
+      <div class="desc">报告章节点击直达仿真数据</div>
+      <div class="meta"><span class="lbl">FR-04:</span> 可信可追溯</div>
+    </div>
+    <div class="step-cell constraint">
+      <div class="action">记忆一致性</div>
+      <div class="desc">同一会话内上下文保持</div>
+      <div class="meta"><span class="lbl">FR-05:</span> 多轮对话语义连贯</div>
+    </div>
+  </div>
+
+  <!-- Timeline -->
+  <div class="timeline-arrow"></div>
+  <div class="timeline-labels">
+    <div>T₀ ~ T+5min</div>
+    <div>T+5 ~ T+8min</div>
+    <div>T+8 ~ T+38min</div>
+    <div>T+38 ~ T+45min</div>
+    <div>T+45min ~ ∞（异步）</div>
+  </div>
+
+</div>
+
+<div class="legend">
+  <div class="legend-item"><div class="swatch" style="background:linear-gradient(135deg,#4facfe,#00f2fe)">▤</div>步骤动作单元</div>
+  <div class="legend-item"><div class="swatch" style="background:rgba(255,210,0,0.15); border:1px solid rgba(255,210,0,0.4); color:#ffd200">◆</div>决策分支</div>
+  <div class="legend-item"><div class="swatch" style="background:rgba(245,87,108,0.15); border:1px solid rgba(245,87,108,0.4); color:#f5576c">⏱</div>时间 / 性能约束</div>
+  <div class="legend-item">📌 工作流总耗时（端到端）：约 45 分钟内完成核心 5 步</div>
+</div>
+
+</body>
+</html>

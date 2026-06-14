@@ -44,6 +44,8 @@ htmlcov/
 # Cursor
 .cursor/
 .claude/
+.claude-design/
+MEMORY.md
 
 # 文档与测试程序
 mydoc/

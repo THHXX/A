@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xmi:XMI xmi:version="2.1"
+         xmlns:xmi="http://schema.omg.org/spec/XMI/2.1"
+         xmlns:uml="http://schema.omg.org/spec/UML/2.1">
+  <xmi:Documentation exporter="Claude" exporterVersion="1.0"/>
+
+  <uml:Package xmi:id="root" name="MiroFish界面跳转架构">
+
+    <!-- ═══ P1: 项目组 (UC-01, UC-02) ═══ -->
+    <packagedElement xmi:type="uml:Package" xmi:id="pkg1" name="P1_项目相关">
+      <ownedComment xmi:id="n1" body="UC-01 创建项目&#xa;UC-02 管理项目"/>
+      <packagedElement xmi:type="uml:Class" xmi:id="c1a" name="项目界面"/>
+      <packagedElement xmi:type="uml:Class" xmi:id="c1b" name="项目控制器"/>
+      <packagedElement xmi:type="uml:Class" xmi:id="c1c" name="项目存储"/>
+    </packagedElement>
+
+    <!-- ═══ P2: 本体与图谱组 (UC-03, UC-04) ═══ -->
+    <packagedElement xmi:type="uml:Package" xmi:id="pkg2" name="P2_本体与图谱相关">
+      <ownedComment xmi:id="n2" body="UC-03 生成本体定义&#xa;UC-04 构建知识图谱"/>
+      <packagedElement xmi:type="uml:Class" xmi:id="c2a" name="本体界面"/>
+      <packagedElement xmi:type="uml:Class" xmi:id="c2b" name="图谱界面"/>
+      <packagedElement xmi:type="uml:Class" xmi:id="c2c" name="本体控制器"/>
+      <packagedElement xmi:type="uml:Class" xmi:id="c2d" name="图谱控制器"/>
+      <packagedElement xmi:type="uml:Class" xmi:id="c2e" name="图谱存储"/>
+    </packagedElement>
+
+    <!-- ═══ P3: 仿真组 (UC-05, UC-06, UC-07) ═══ -->
+    <packagedElement xmi:type="uml:Package" xmi:id="pkg3" name="P3_仿真相关">
+      <ownedComment xmi:id="n3" body="UC-05 生成Agent人设&#xa;UC-06 生成模拟配置&#xa;UC-07 启动并监控模拟"/>
+      <packagedElement xmi:type="uml:Class" xmi:id="c3a" name="Agent界面"/>
+      <packagedElement xmi:type="uml:Class" xmi:id="c3b" name="Agent控制器"/>
+      <packagedElement xmi:type="uml:Class" xmi:id="c3c" name="仿真存储"/>
+    </packagedElement>
+
+    <!-- ═══ P4: 报告与交互组 (UC-08, UC-09, UC-10) ═══ -->
+    <packagedElement xmi:type="uml:Package" xmi:id="pkg4" name="P4_报告与交互相关">
+      <ownedComment xmi:id="n4" body="UC-08 生成并查看报告&#xa;UC-09 采访Agent&#xa;UC-10 与报告对话"/>
+      <packagedElement xmi:type="uml:Class" xmi:id="c4a" name="报告界面"/>
+      <packagedElement xmi:type="uml:Class" xmi:id="c4b" name="报告控制器"/>
+      <packagedElement xmi:type="uml:Class" xmi:id="c4c" name="报告存储"/>
+    </packagedElement>
+
+    <!-- ═══ 包间依赖 (跳转顺序) ═══ -->
+    <!-- ① P1 → P2: 上传文档 / 生成本体 -->
+    <packagedElement xmi:type="uml:Dependency" xmi:id="dep12"
+                     supplier="pkg1" client="pkg2"
+                     name="①上传文档/生成本体"/>
+
+    <!-- ② P2 → P3: 图谱完成 / 配置仿真 -->
+    <packagedElement xmi:type="uml:Dependency" xmi:id="dep23"
+                     supplier="pkg2" client="pkg3"
+                     name="②图谱完成/配置仿真环境"/>
+
+    <!-- ③ P3 → P4: 模拟结束 / 生成报告 -->
+    <packagedElement xmi:type="uml:Dependency" xmi:id="dep34"
+                     supplier="pkg3" client="pkg4"
+                     name="③模拟结束/生成预测报告"/>
+
+    <!-- ④ P4 → P3: 采访Agent (可选返回) -->
+    <packagedElement xmi:type="uml:Dependency" xmi:id="dep43"
+                     supplier="pkg4" client="pkg3"
+                     name="④采访Agent(可选返回)"/>
+
+  </uml:Package>
+</xmi:XMI>
